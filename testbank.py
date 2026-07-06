@@ -114,8 +114,8 @@ with st.sidebar:
         knowledge_options = get_available_knowledge(selected_chapter if selected_chapter != "全部" else None)
         selected_knowledge = st.selectbox("选择知识点", knowledge_options, key="knowledge_select")
         
-        # 添加一个空白行，为下拉菜单提供更多下方空间
-        st.write("")
+                # ---- 增加空白行，为下拉菜单提供更多下方空间 ----
+        st.write("\n" * 3)  # 三个空行
         
         col1, col2 = st.columns(2)
         with col1:
