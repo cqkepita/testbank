@@ -13,16 +13,35 @@ import os
 # ---------- 读取外部JSON题库 ----------
 @st.cache_data(ttl=600)  # 缓存10分钟，修改题库后等待生效
 def load_questions():
-    """从questions.json加载所有题目"""
+    """从questions.json加载所有题目，并给出详细错误信息"""
     json_path = os.path.join(os.path.dirname(__file__), "questions.json")
+    
+    # 检查文件是否存在
+    if not os.path.exists(json_path):
+        st.error(f"❌ 文件不存在：{json_path}")
+        st.info("请确保 'questions.json' 与 'testbank.py' 在同一目录下。")
+        return []
+    
+    # 尝试读取并解析
     try:
         with open(json_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        st.error("❌ 题库文件 questions.json 未找到，请确保它与程序在同一目录下。")
+            content = f.read()
+            # 如果文件为空，直接报错
+            if not content.strip():
+                st.error("❌ questions.json 文件为空，请填入题目数据。")
+                return []
+            # 解析JSON
+            data = json.loads(content)
+            if not isinstance(data, list):
+                st.error("❌ questions.json 必须是一个数组（以 [ 开头，以 ] 结尾）。")
+                return []
+            return data
+    except json.JSONDecodeError as e:
+        st.error(f"❌ JSON 格式错误，具体位置：{e}")
+        st.info("请使用 JSONLint 等工具检查并修正格式错误。")
         return []
-    except json.JSONDecodeError:
-        st.error("❌ 题库文件格式错误，请检查JSON语法是否正确。")
+    except Exception as e:
+        st.error(f"❌ 读取文件时发生未知错误：{e}")
         return []
 
 QUESTION_BANK = load_questions()
