@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-教学练习小程序 - 从外部JSON文件读取题库
+教学练习小程序 - 从外部JSON文件读取题库（支持多文件）
 支持选择题、判断题、填空题
-题库文件：questions.json（放在同一目录下）
+题库文件：chapter*.json（放在同一目录下）
 """
 
 import streamlit as st
@@ -11,13 +11,11 @@ import json
 import os
 import glob
 
-# ---------- 读取外部JSON题库 ----------
-@st.cache_data(ttl=600)  # 缓存10分钟，修改题库后等待生效
-
+# ---------- 读取外部JSON题库（支持多个 chapter*.json） ----------
+@st.cache_data(ttl=600)
 def load_questions():
     """从所有 chapter*.json 文件中加载题目，合并成一个题库"""
     base_dir = os.path.dirname(__file__)
-    # 查找所有以 chapter 开头、.json 结尾的文件
     pattern = os.path.join(base_dir, "chapter*.json")
     file_list = glob.glob(pattern)
     
@@ -28,11 +26,10 @@ def load_questions():
     all_questions = []
     error_files = []
     
-    for file_path in sorted(file_list):  # 排序保证加载顺序一致
+    for file_path in sorted(file_list):
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                # 确保是列表
                 if isinstance(data, list):
                     all_questions.extend(data)
                 else:
@@ -44,7 +41,6 @@ def load_questions():
     
     if error_files:
         st.error(f"⚠️ 以下文件加载失败，请检查：{', '.join(error_files)}")
-        # 如果全部失败，返回空列表
         if not all_questions:
             return []
     
@@ -60,7 +56,7 @@ def filter_questions(chapter=None, knowledge=None):
     filtered = QUESTION_BANK
     if chapter and chapter != "全部":
         filtered = [q for q in filtered if q["chapter"] == chapter]
-    if knowledge and knowledge != "全部":
+    if knowledge and knowledge != "全部" and knowledge is not None:
         filtered = [q for q in filtered if q["knowledge"] == knowledge]
     return filtered
 
@@ -68,9 +64,11 @@ def get_available_knowledge(chapter=None):
     if not QUESTION_BANK:
         return []
     if chapter is None or chapter == "全部":
-        return sorted(set(q["knowledge"] for q in QUESTION_BANK))
+        knowledges = sorted(set(q["knowledge"] for q in QUESTION_BANK))
     else:
-        return sorted(set(q["knowledge"] for q in QUESTION_BANK if q["chapter"] == chapter))
+        knowledges = sorted(set(q["knowledge"] for q in QUESTION_BANK if q["chapter"] == chapter))
+    # 在列表最前面插入“全部”
+    return ["全部"] + knowledges
 
 def pick_questions(chapter, knowledge, count=5):
     pool = filter_questions(chapter, knowledge)
@@ -106,21 +104,25 @@ init_session_state()
 with st.sidebar:
     st.header("🎯 控制面板")
     
-    # 检查题库是否加载成功
     if not QUESTION_BANK:
-        st.warning("⚠️ 题库为空，请检查 questions.json 文件。")
+        st.warning("⚠️ 题库为空，请检查 chapter*.json 文件。")
     else:
         chapters = ["全部"] + sorted(set(q["chapter"] for q in QUESTION_BANK))
         selected_chapter = st.selectbox("选择章节", chapters, key="chapter_select")
         
-        knowledges = get_available_knowledge(selected_chapter if selected_chapter != "全部" else None)
-        knowledge_options = ["全部"] + knowledges
+        # 获取知识点列表（已包含“全部”）
+        knowledge_options = get_available_knowledge(selected_chapter if selected_chapter != "全部" else None)
         selected_knowledge = st.selectbox("选择知识点", knowledge_options, key="knowledge_select")
+        
+        # 添加一个空白行，为下拉菜单提供更多下方空间
+        st.write("")
         
         col1, col2 = st.columns(2)
         with col1:
             if st.button("🔄 开始练习", use_container_width=True):
-                new_questions = pick_questions(selected_chapter, selected_knowledge, count=5)
+                # 如果知识点选择“全部”，则传 None 表示不过滤
+                kw = None if selected_knowledge == "全部" else selected_knowledge
+                new_questions = pick_questions(selected_chapter, kw, count=5)
                 if not new_questions:
                     st.warning("当前选择下没有题目，请调整筛选条件")
                 else:
@@ -194,7 +196,6 @@ if st.session_state.questions and not st.session_state.quiz_finished:
     st.markdown(f"**{q['question']}**")
     st.caption(f"📂 {q['chapter']}  ·  🏷️ {q['knowledge']}  ·  📌 {q['type']}")
     
-    # 根据题型显示输入
     if q["type"] in ["choice", "judge"]:
         options = q["options"]
         current_index = st.session_state.user_answer if isinstance(st.session_state.user_answer, int) else None
@@ -219,7 +220,6 @@ if st.session_state.questions and not st.session_state.quiz_finished:
             user_input = st.text_input("输入答案", value=st.session_state.user_answer or "", key=f"fill_{idx}")
             st.session_state.user_answer = user_input.strip() if user_input else ""
     
-    # 按钮
     col_sub, col_next = st.columns(2)
     with col_sub:
         if st.button("✅ 提交答案", use_container_width=True, disabled=st.session_state.submitted):
@@ -294,4 +294,4 @@ else:
     st.write("「错题重练」会根据错题知识点生成新题目，针对性巩固。")
 
 st.divider()
-st.caption("教学练习小程序 · 多题型版 · 题库独立为 questions.json")
+st.caption("教学练习小程序 · 多题型版 · 题库独立为 chapter*.json")
