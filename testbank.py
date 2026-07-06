@@ -11,10 +11,9 @@ import json
 import os
 import glob
 
-# ---------- 读取外部JSON题库（支持多个 chapter*.json） ----------
+# ---------- 读取外部JSON题库 ----------
 @st.cache_data(ttl=600)
 def load_questions():
-    """从所有 chapter*.json 文件中加载题目，合并成一个题库"""
     base_dir = os.path.dirname(__file__)
     pattern = os.path.join(base_dir, "chapter*.json")
     file_list = glob.glob(pattern)
@@ -67,16 +66,25 @@ def get_available_knowledge(chapter=None):
         knowledges = sorted(set(q["knowledge"] for q in QUESTION_BANK))
     else:
         knowledges = sorted(set(q["knowledge"] for q in QUESTION_BANK if q["chapter"] == chapter))
-    # 在列表最前面插入“全部”
     return ["全部"] + knowledges
 
-def pick_questions(chapter, knowledge, count=5):
+def pick_questions(chapter, knowledge, count=None):
+    """
+    抽取题目，count=None 时返回全部题目（打乱顺序）
+    count为整数时返回随机抽取的 count 道
+    """
     pool = filter_questions(chapter, knowledge)
     if not pool:
         return []
-    if len(pool) <= count:
-        return pool[:]
-    return random.sample(pool, count)
+    if count is None:
+        # 返回全部，但打乱顺序
+        shuffled = pool[:]
+        random.shuffle(shuffled)
+        return shuffled
+    else:
+        if len(pool) <= count:
+            return pool[:]
+        return random.sample(pool, count)
 
 def init_session_state():
     if "questions" not in st.session_state:
@@ -110,19 +118,18 @@ with st.sidebar:
         chapters = ["全部"] + sorted(set(q["chapter"] for q in QUESTION_BANK))
         selected_chapter = st.selectbox("选择章节", chapters, key="chapter_select")
         
-        # 获取知识点列表（已包含“全部”）
         knowledge_options = get_available_knowledge(selected_chapter if selected_chapter != "全部" else None)
         selected_knowledge = st.selectbox("选择知识点", knowledge_options, key="knowledge_select")
         
-                # ---- 增加空白行，为下拉菜单提供更多下方空间 ----
+        # ---- 增加空白行，为下拉菜单提供更多下方空间 ----
         st.write("\n" * 3)  # 三个空行
         
         col1, col2 = st.columns(2)
         with col1:
             if st.button("🔄 开始练习", use_container_width=True):
-                # 如果知识点选择“全部”，则传 None 表示不过滤
                 kw = None if selected_knowledge == "全部" else selected_knowledge
-                new_questions = pick_questions(selected_chapter, kw, count=5)
+                # 修改：count=None 表示返回全部题目
+                new_questions = pick_questions(selected_chapter, kw, count=None)
                 if not new_questions:
                     st.warning("当前选择下没有题目，请调整筛选条件")
                 else:
@@ -290,7 +297,7 @@ elif st.session_state.quiz_finished:
 else:
     st.info("👆 请先在左侧选择章节和知识点，然后点击「开始练习」或「错题重练」")
     st.write("**支持题型**：选择题、判断题、填空题。")
-    st.write("点击「开始练习」随机抽取5道题，答错自动收入错题本。")
+    st.write("点击「开始练习」会显示所有符合条件的题目（顺序随机）。")
     st.write("「错题重练」会根据错题知识点生成新题目，针对性巩固。")
 
 st.divider()
