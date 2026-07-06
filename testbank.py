@@ -9,10 +9,10 @@ import streamlit as st
 import random
 import json
 import os
+import glob
 
 # ---------- 读取外部JSON题库 ----------
 @st.cache_data(ttl=600)  # 缓存10分钟，修改题库后等待生效
-import glob
 
 def load_questions():
     """从所有 chapter*.json 文件中加载题目，合并成一个题库"""
