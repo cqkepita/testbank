@@ -12,37 +12,44 @@ import os
 
 # ---------- 读取外部JSON题库 ----------
 @st.cache_data(ttl=600)  # 缓存10分钟，修改题库后等待生效
+import glob
+
 def load_questions():
-    """从questions.json加载所有题目，并给出详细错误信息"""
-    json_path = os.path.join(os.path.dirname(__file__), "questions.json")
+    """从所有 chapter*.json 文件中加载题目，合并成一个题库"""
+    base_dir = os.path.dirname(__file__)
+    # 查找所有以 chapter 开头、.json 结尾的文件
+    pattern = os.path.join(base_dir, "chapter*.json")
+    file_list = glob.glob(pattern)
     
-    # 检查文件是否存在
-    if not os.path.exists(json_path):
-        st.error(f"❌ 文件不存在：{json_path}")
-        st.info("请确保 'questions.json' 与 'testbank.py' 在同一目录下。")
+    if not file_list:
+        st.error("❌ 未找到任何 chapter*.json 文件，请确保文件命名正确。")
         return []
     
-    # 尝试读取并解析
-    try:
-        with open(json_path, "r", encoding="utf-8") as f:
-            content = f.read()
-            # 如果文件为空，直接报错
-            if not content.strip():
-                st.error("❌ questions.json 文件为空，请填入题目数据。")
-                return []
-            # 解析JSON
-            data = json.loads(content)
-            if not isinstance(data, list):
-                st.error("❌ questions.json 必须是一个数组（以 [ 开头，以 ] 结尾）。")
-                return []
-            return data
-    except json.JSONDecodeError as e:
-        st.error(f"❌ JSON 格式错误，具体位置：{e}")
-        st.info("请使用 JSONLint 等工具检查并修正格式错误。")
-        return []
-    except Exception as e:
-        st.error(f"❌ 读取文件时发生未知错误：{e}")
-        return []
+    all_questions = []
+    error_files = []
+    
+    for file_path in sorted(file_list):  # 排序保证加载顺序一致
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                # 确保是列表
+                if isinstance(data, list):
+                    all_questions.extend(data)
+                else:
+                    error_files.append(f"{os.path.basename(file_path)} (不是数组)")
+        except json.JSONDecodeError as e:
+            error_files.append(f"{os.path.basename(file_path)} (JSON格式错误: {e})")
+        except Exception as e:
+            error_files.append(f"{os.path.basename(file_path)} (读取错误: {e})")
+    
+    if error_files:
+        st.error(f"⚠️ 以下文件加载失败，请检查：{', '.join(error_files)}")
+        # 如果全部失败，返回空列表
+        if not all_questions:
+            return []
+    
+    st.success(f"✅ 成功加载 {len(all_questions)} 道题目，来自 {len(file_list)} 个文件。")
+    return all_questions
 
 QUESTION_BANK = load_questions()
 
