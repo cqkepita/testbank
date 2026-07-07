@@ -19,13 +19,14 @@ from supabase import create_client, Client
 import datetime
 import time
 
+
 # ---------- 配置 ----------
-# 尝试从环境变量读取，否则从 st.secrets 读取
-SUPABASE_URL = os.getenv("SUPABASE_URL", st.secrets.get("SUPABASE_URL"))
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", st.secrets.get("SUPABASE_KEY"))
+# 只从环境变量读取，不再使用 st.secrets
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    st.error("❌ 缺少 Supabase 凭证，请检查环境变量或 secrets.toml")
+    st.error("❌ 缺少 Supabase 凭证，请在 Railway 中设置环境变量 SUPABASE_URL 和 SUPABASE_KEY")
     st.stop()
 
 # 管理员密码（用于教师看板）- 可在此修改
