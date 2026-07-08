@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-教学练习小程序 - 完整版（带用户系统 + 数据统计）
+教学练习小程序 - 完整版（用户系统 + 班级/年份筛选 + 统计）
 功能：
-- 用户注册/登录（密码加密）
-- 答题记录入库（练习日志、题目错误统计、知识点掌握度）
-- 教师看板（总用户数、高频错题、知识点正确率）
+- 用户注册/登录（含班级、入学年份）
+- 答题记录入库（含知识点字段）
+- 教师看板：按班级、年份筛选高频错题和知识点正确率
 - 错题重练（基于本地错题本）
-题库：chapter*.json（需包含 id 字段，数字全局唯一）
+题库：chapter*.json（需包含 id 字段）
 """
 
 import streamlit as st
@@ -15,13 +15,11 @@ import json
 import os
 import glob
 import bcrypt
-from supabase import create_client, Client
+from supabase import create_client
 import datetime
 import time
 
-
 # ---------- 配置 ----------
-# 只从环境变量读取，不再使用 st.secrets
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
@@ -29,10 +27,9 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     st.error("❌ 缺少 Supabase 凭证，请在 Railway 中设置环境变量 SUPABASE_URL 和 SUPABASE_KEY")
     st.stop()
 
-# 管理员密码（用于教师看板）- 可在此修改
-ADMIN_PASSWORD = "admin123"  # 建议改为强密码
+ADMIN_PASSWORD = "admin123"  # 教师看板密码，可修改
 
-# ---------- 初始化 Supabase 客户端 ----------
+# ---------- 初始化 Supabase ----------
 @st.cache_resource
 def init_supabase():
     return create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -46,26 +43,33 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, hashed: str) -> bool:
     return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
-def register_user(username: str, password: str) -> tuple[bool, str]:
+def register_user(username: str, password: str, class_name: str, study_year: int) -> tuple[bool, str]:
     """注册用户，返回 (成功标志, 消息)"""
     if len(username) < 3:
         return False, "用户名至少3个字符"
     if len(password) < 6:
         return False, "密码至少6个字符"
+    if not class_name:
+        return False, "班级不能为空"
+    if not study_year:
+        return False, "入学年份不能为空"
+
     # 检查用户名是否已存在
     resp = supabase.table('users').select('id').eq('username', username).execute()
     if resp.data:
         return False, "用户名已被占用"
-    # 插入新用户
+
     hashed = hash_password(password)
     try:
         resp = supabase.table('users').insert({
             'username': username,
-            'password_hash': hashed
+            'password_hash': hashed,
+            'class_name': class_name,
+            'study_year': study_year
         }).execute()
         if resp.data:
-            # 更新站点统计总用户数
-            supabase.rpc('increment_site_stats', {'stat_key': 'total_users'}).execute()
+            # 更新总用户数统计（参数名 p_key 与数据库函数匹配）
+            supabase.rpc('increment_site_stats', {'p_key': 'total_users'}).execute()
             return True, "注册成功，请登录"
         else:
             return False, "注册失败，请重试"
@@ -73,7 +77,6 @@ def register_user(username: str, password: str) -> tuple[bool, str]:
         return False, f"注册异常: {str(e)}"
 
 def login_user(username: str, password: str) -> tuple[bool, str, dict]:
-    """登录，返回 (成功标志, 消息, 用户数据)"""
     resp = supabase.table('users').select('*').eq('username', username).execute()
     if not resp.data:
         return False, "用户名不存在", {}
@@ -87,22 +90,21 @@ def login_user(username: str, password: str) -> tuple[bool, str, dict]:
     else:
         return False, "密码错误", {}
 
-def record_practice(user_id: str, question_id: int, is_correct: bool, time_spent: int = None):
+def record_practice(user_id: str, question_id: int, is_correct: bool, knowledge_point: str, time_spent: int = None):
     """记录一次练习"""
     try:
-        # 插入练习日志
         data = {
             'user_id': user_id,
             'question_id': question_id,
             'is_correct': is_correct,
             'answered_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            'knowledge_point': knowledge_point
         }
         if time_spent:
             data['time_spent'] = time_spent
         supabase.table('practice_logs').insert(data).execute()
 
         # 更新题目统计
-        # 先获取当前统计
         resp = supabase.table('question_stats').select('*').eq('question_id', question_id).execute()
         if resp.data:
             stats = resp.data[0]
@@ -114,7 +116,6 @@ def record_practice(user_id: str, question_id: int, is_correct: bool, time_spent
                 'last_updated': datetime.datetime.now(datetime.timezone.utc).isoformat()
             }).eq('question_id', question_id).execute()
         else:
-            # 首次记录
             supabase.table('question_stats').insert({
                 'question_id': question_id,
                 'total_attempts': 1,
@@ -122,38 +123,30 @@ def record_practice(user_id: str, question_id: int, is_correct: bool, time_spent
                 'last_updated': datetime.datetime.now(datetime.timezone.utc).isoformat()
             }).execute()
 
-        # 更新用户知识点掌握度（需获取题目对应的知识点）
-        # 从题库中查找知识点
-        question = next((q for q in QUESTION_BANK if q['id'] == question_id), None)
-        if question:
-            knowledge = question['knowledge']
-            # 获取该用户该知识点历史数据
-            resp = supabase.table('user_progress').select('*').eq('user_id', user_id).eq('knowledge_point', knowledge).execute()
-            if resp.data:
-                prog = resp.data[0]
-                total = prog['total_attempts'] + 1
-                correct = prog['correct_rate'] * prog['total_attempts'] + (1 if is_correct else 0)
-                new_rate = correct / total
-                supabase.table('user_progress').update({
-                    'total_attempts': total,
-                    'correct_rate': new_rate,
-                    'last_practiced': datetime.datetime.now(datetime.timezone.utc).isoformat()
-                }).eq('id', prog['id']).execute()
-            else:
-                # 新增
-                supabase.table('user_progress').insert({
-                    'user_id': user_id,
-                    'knowledge_point': knowledge,
-                    'correct_rate': 1.0 if is_correct else 0.0,
-                    'total_attempts': 1,
-                    'last_practiced': datetime.datetime.now(datetime.timezone.utc).isoformat()
-                }).execute()
+        # 更新用户知识点掌握度
+        resp = supabase.table('user_progress').select('*').eq('user_id', user_id).eq('knowledge_point', knowledge_point).execute()
+        if resp.data:
+            prog = resp.data[0]
+            total = prog['total_attempts'] + 1
+            correct = prog['correct_rate'] * prog['total_attempts'] + (1 if is_correct else 0)
+            new_rate = correct / total
+            supabase.table('user_progress').update({
+                'total_attempts': total,
+                'correct_rate': new_rate,
+                'last_practiced': datetime.datetime.now(datetime.timezone.utc).isoformat()
+            }).eq('id', prog['id']).execute()
+        else:
+            supabase.table('user_progress').insert({
+                'user_id': user_id,
+                'knowledge_point': knowledge_point,
+                'correct_rate': 1.0 if is_correct else 0.0,
+                'total_attempts': 1,
+                'last_practiced': datetime.datetime.now(datetime.timezone.utc).isoformat()
+            }).execute()
     except Exception as e:
         st.error(f"记录数据失败: {str(e)}")
-        # 不影响主流程
 
 def get_site_stats():
-    """获取总用户数"""
     try:
         resp = supabase.table('site_stats').select('stat_value').eq('stat_key', 'total_users').execute()
         if resp.data:
@@ -162,40 +155,33 @@ def get_site_stats():
     except:
         return 0
 
-def get_top_wrong_questions(limit=10):
-    """获取错误次数最多的题目（高频错题）"""
+# 新版统计函数（调用数据库函数）
+def get_top_wrong_questions_filtered(class_name=None, study_year=None, limit=10):
     try:
-        resp = supabase.table('question_stats').select('question_id, wrong_attempts').order('wrong_attempts', desc=True).limit(limit).execute()
-        return resp.data
-    except:
+        result = supabase.rpc('get_top_wrong_questions', {
+            'p_class_name': class_name,
+            'p_study_year': study_year,
+            'p_limit': limit
+        }).execute()
+        return result.data
+    except Exception as e:
+        st.error(f"获取高频错题失败: {e}")
         return []
 
-def get_all_knowledge_accuracy():
-    """获取所有知识点的平均正确率（基于所有用户）"""
+def get_knowledge_accuracy_filtered(class_name=None, study_year=None):
     try:
-        resp = supabase.table('user_progress').select('knowledge_point, correct_rate').execute()
-        if not resp.data:
-            return {}
-        # 按知识点汇总
-        agg = {}
-        for row in resp.data:
-            kp = row['knowledge_point']
-            rate = row['correct_rate']
-            if kp not in agg:
-                agg[kp] = []
-            agg[kp].append(rate)
-        # 计算平均
-        avg = {}
-        for kp, rates in agg.items():
-            avg[kp] = sum(rates) / len(rates)
-        return avg
-    except:
-        return {}
+        result = supabase.rpc('get_knowledge_accuracy', {
+            'p_class_name': class_name,
+            'p_study_year': study_year
+        }).execute()
+        return result.data
+    except Exception as e:
+        st.error(f"获取知识点正确率失败: {e}")
+        return []
 
-# ---------- 加载题库 ----------
+# ---------- 题库加载 ----------
 @st.cache_data(ttl=600)
 def load_questions():
-    """从所有 chapter*.json 加载题目，必须包含 id 字段"""
     base_dir = os.path.dirname(__file__)
     pattern = os.path.join(base_dir, "chapter*.json")
     file_list = glob.glob(pattern)
@@ -213,9 +199,8 @@ def load_questions():
                     continue
                 for q in data:
                     if 'id' not in q:
-                        st.error(f"❌ 题目缺少 'id' 字段：{q.get('question', '未知题目')[:30]}... 请添加数字 id")
+                        st.error(f"❌ 题目缺少 'id' 字段：{q.get('question', '未知')[:30]}...")
                         continue
-                    # 检查 ID 是否重复
                     if any(existing['id'] == q['id'] for existing in all_questions):
                         st.error(f"❌ 题目 ID 重复：{q['id']}，请修正")
                         continue
@@ -279,6 +264,8 @@ def init_session_state():
         st.session_state.user_answer = None
     if "start_time" not in st.session_state:
         st.session_state.start_time = None
+    if "show_dashboard" not in st.session_state:
+        st.session_state.show_dashboard = False
 
 # ---------- 主页面 ----------
 st.set_page_config(page_title="智能练习 · 教学平台", page_icon="📚", layout="centered")
@@ -286,10 +273,12 @@ st.title("📖 智能练习 · 教学平台")
 
 init_session_state()
 
-# 侧边栏 - 用户信息/登录/注册
+# ---------- 侧边栏（顺序：登录/欢迎 → 练习控制 → 统计 → 教师看板）----------
 with st.sidebar:
+    # 1. 用户信息（登录/注册/欢迎）
     if st.session_state.user:
         st.write(f"👤 欢迎，**{st.session_state.user['username']}**")
+        st.caption(f"班级：{st.session_state.user.get('class_name', '未设置')}  |  年份：{st.session_state.user.get('study_year', '未设置')}")
         if st.button("🚪 退出登录"):
             st.session_state.user = None
             st.session_state.questions = []
@@ -297,7 +286,6 @@ with st.sidebar:
             st.rerun()
     else:
         st.subheader("🔐 登录 / 注册")
-        # 使用 tabs 切换
         tab1, tab2 = st.tabs(["登录", "注册"])
         with tab1:
             with st.form("login_form"):
@@ -319,31 +307,74 @@ with st.sidebar:
             with st.form("register_form"):
                 reg_username = st.text_input("用户名 (至少3字符)")
                 reg_password = st.text_input("密码 (至少6字符)", type="password")
+                reg_class = st.text_input("班级 (如：2023级1班)")
+                reg_year = st.number_input("入学年份", min_value=2000, max_value=2100, step=1, value=2026)
                 reg_submit = st.form_submit_button("注册")
                 if reg_submit:
-                    if reg_username and reg_password:
-                        ok, msg = register_user(reg_username, reg_password)
+                    if reg_username and reg_password and reg_class and reg_year:
+                        ok, msg = register_user(reg_username, reg_password, reg_class, int(reg_year))
                         if ok:
                             st.success(msg)
                         else:
                             st.error(msg)
                     else:
-                        st.warning("请填写完整")
+                        st.warning("请填写完整信息")
 
-# ---------- 主逻辑 ----------
-if not st.session_state.user:
-    st.info("👆 请先在左侧登录或注册，以便记录学习数据")
-    st.stop()
+    # 2. 练习控制
+    st.markdown("---")
+    st.subheader("🎯 练习控制")
+    chapters = ["全部"] + sorted(set(q["chapter"] for q in QUESTION_BANK))
+    selected_chapter = st.selectbox("选择章节", chapters, key="chapter_select")
+    knowledge_options = get_available_knowledge(selected_chapter if selected_chapter != "全部" else None)
+    selected_knowledge = st.selectbox("选择知识点", knowledge_options, key="knowledge_select")
 
-# 已登录用户
-user_id = st.session_state.user['id']
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🔄 开始练习", use_container_width=True):
+            kw = None if selected_knowledge == "全部" else selected_knowledge
+            new_questions = pick_questions(selected_chapter, kw, count=None)
+            if not new_questions:
+                st.sidebar.warning("当前选择下没有题目")
+            else:
+                st.session_state.questions = new_questions
+                st.session_state.current_idx = 0
+                st.session_state.user_answer = None
+                st.session_state.submitted = False
+                st.session_state.feedback = None
+                st.session_state.quiz_finished = False
+                st.session_state.start_time = time.time()
+                st.rerun()
+    with col2:
+        if st.button("📕 错题重练", use_container_width=True):
+            if not st.session_state.wrong_list:
+                st.sidebar.info("错题本为空")
+            else:
+                wrong_knowledges = set(q["knowledge"] for q in st.session_state.wrong_list)
+                new_questions = []
+                for kw in wrong_knowledges:
+                    pool = filter_questions(knowledge=kw)
+                    if pool:
+                        sample_size = min(2, len(pool))
+                        new_questions.extend(random.sample(pool, sample_size))
+                if not new_questions:
+                    st.sidebar.warning("找不到对应知识点的题目")
+                else:
+                    random.shuffle(new_questions)
+                    st.session_state.questions = new_questions
+                    st.session_state.current_idx = 0
+                    st.session_state.user_answer = None
+                    st.session_state.submitted = False
+                    st.session_state.feedback = None
+                    st.session_state.quiz_finished = False
+                    st.session_state.start_time = time.time()
+                    st.rerun()
 
-# 侧边栏导航（仅登录后）
-with st.sidebar:
-    st.divider()
+    # 3. 统计与错题本
+    st.markdown("---")
     st.subheader("📊 统计")
-    st.write(f"总注册用户: {get_site_stats()}")
-    st.write(f"错题数: {len(st.session_state.wrong_list)}")
+    if st.session_state.user:
+        st.write(f"总注册用户: {get_site_stats()}")
+        st.write(f"我的错题数: {len(st.session_state.wrong_list)}")
     with st.expander("📋 错题本", expanded=False):
         if not st.session_state.wrong_list:
             st.info("暂无错题，继续加油！")
@@ -367,9 +398,8 @@ with st.sidebar:
                     if wrong_q.get("explanation"):
                         st.info(f"💡 解析: {wrong_q['explanation']}")
 
-# 教师看板入口
-with st.sidebar:
-    st.divider()
+    # 4. 教师看板（放在最下方）
+    st.markdown("---")
     with st.expander("🔐 教师看板 (需密码)"):
         admin_pw = st.text_input("管理员密码", type="password", key="admin_pw_input")
         if st.button("查看看板"):
@@ -387,91 +417,66 @@ with st.sidebar:
 if st.session_state.get("show_dashboard", False):
     st.header("📊 教师看板")
     with st.spinner("加载数据..."):
+        # 获取所有班级和年份（用于筛选）
+        try:
+            classes_resp = supabase.table('users').select('class_name').execute()
+            classes = sorted(set([row['class_name'] for row in classes_resp.data if row['class_name']]))
+            years_resp = supabase.table('users').select('study_year').execute()
+            years = sorted(set([row['study_year'] for row in years_resp.data if row['study_year']]), reverse=True)
+        except Exception as e:
+            classes = []
+            years = []
+            st.error(f"获取筛选选项失败: {e}")
+
+        col_f1, col_f2 = st.columns(2)
+        with col_f1:
+            selected_class = st.selectbox("选择班级", ["全部"] + classes, key="class_filter")
+        with col_f2:
+            selected_year = st.selectbox("选择年份", ["全部"] + [str(y) for y in years], key="year_filter")
+
+        class_filter = None if selected_class == "全部" else selected_class
+        year_filter = None if selected_year == "全部" else int(selected_year)
+
+        # 获取统计数据
         total_users = get_site_stats()
-        top_wrong = get_top_wrong_questions(10)
-        knowledge_acc = get_all_knowledge_accuracy()
+        top_wrong = get_top_wrong_questions_filtered(class_filter, year_filter, limit=10)
+        knowledge_acc = get_knowledge_accuracy_filtered(class_filter, year_filter)
+
         st.metric("总注册用户", total_users)
         st.subheader("🔝 高频错题 TOP 10")
         if top_wrong:
-            # 获取题目内容
             id_to_question = {q['id']: q for q in QUESTION_BANK}
             for item in top_wrong:
                 qid = item['question_id']
-                wrongs = item['wrong_attempts']
+                wrongs = item['wrong_count'] if 'wrong_count' in item else item.get('wrong_attempts', 0)
+                kp = item.get('knowledge_point', '未知知识点')
                 q = id_to_question.get(qid)
                 if q:
-                    st.write(f"**ID {qid}**: {q['question'][:50]}... (错误 {wrongs} 次)")
+                    st.write(f"**ID {qid}** ({kp}): {q['question'][:50]}... (错误 {wrongs} 次)")
                 else:
-                    st.write(f"**ID {qid}**: 题目已删除 (错误 {wrongs} 次)")
+                    st.write(f"**ID {qid}** ({kp}): 题目已删除 (错误 {wrongs} 次)")
         else:
             st.info("暂无数据")
         st.subheader("📈 知识点平均正确率")
         if knowledge_acc:
-            for kp, rate in sorted(knowledge_acc.items(), key=lambda x: x[1]):
-                st.write(f"- {kp}: {rate:.1%}")
+            for row in knowledge_acc:
+                kp = row['knowledge_point']
+                acc = row['accuracy']
+                st.write(f"- {kp}: {acc:.1%}")
         else:
             st.info("暂无数据")
     st.stop()  # 看板独占页面
-
-# ---------- 练习主界面 ----------
-st.sidebar.markdown("---")
-st.sidebar.subheader("🎯 练习控制")
-chapters = ["全部"] + sorted(set(q["chapter"] for q in QUESTION_BANK))
-selected_chapter = st.sidebar.selectbox("选择章节", chapters, key="chapter_select")
-knowledge_options = get_available_knowledge(selected_chapter if selected_chapter != "全部" else None)
-selected_knowledge = st.sidebar.selectbox("选择知识点", knowledge_options, key="knowledge_select")
-
-col1, col2 = st.sidebar.columns(2)
-with col1:
-    if st.button("🔄 开始练习", use_container_width=True):
-        kw = None if selected_knowledge == "全部" else selected_knowledge
-        new_questions = pick_questions(selected_chapter, kw, count=None)  # 全部
-        if not new_questions:
-            st.sidebar.warning("当前选择下没有题目")
-        else:
-            st.session_state.questions = new_questions
-            st.session_state.current_idx = 0
-            st.session_state.user_answer = None
-            st.session_state.submitted = False
-            st.session_state.feedback = None
-            st.session_state.quiz_finished = False
-            st.session_state.start_time = time.time()
-            st.rerun()
-with col2:
-    if st.button("📕 错题重练", use_container_width=True):
-        if not st.session_state.wrong_list:
-            st.sidebar.info("错题本为空")
-        else:
-            wrong_knowledges = set(q["knowledge"] for q in st.session_state.wrong_list)
-            new_questions = []
-            for kw in wrong_knowledges:
-                pool = filter_questions(knowledge=kw)
-                if pool:
-                    sample_size = min(2, len(pool))
-                    new_questions.extend(random.sample(pool, sample_size))
-            if not new_questions:
-                st.sidebar.warning("找不到对应知识点的题目")
-            else:
-                random.shuffle(new_questions)
-                st.session_state.questions = new_questions
-                st.session_state.current_idx = 0
-                st.session_state.user_answer = None
-                st.session_state.submitted = False
-                st.session_state.feedback = None
-                st.session_state.quiz_finished = False
-                st.session_state.start_time = time.time()
-                st.rerun()
 
 # ---------- 主区域答题 ----------
 if st.session_state.questions and not st.session_state.quiz_finished:
     idx = st.session_state.current_idx
     total = len(st.session_state.questions)
     q = st.session_state.questions[idx]
-    # 检查题目是否有 id
     if 'id' not in q:
-        st.error(f"题目缺少 id 字段，请修正 JSON: {q.get('question', '未知')}")
+        st.error(f"题目缺少 id 字段: {q.get('question', '未知')}")
         st.stop()
     question_id = q['id']
+    knowledge_point = q['knowledge']
 
     st.subheader(f"📝 第 {idx+1} / {total} 题")
     st.markdown(f"**{q['question']}**")
@@ -506,12 +511,11 @@ if st.session_state.questions and not st.session_state.quiz_finished:
     col_sub, col_next = st.columns(2)
     with col_sub:
         if st.button("✅ 提交答案", use_container_width=True, disabled=st.session_state.submitted):
-            # 计算用时
             if st.session_state.start_time:
                 elapsed = int(time.time() - st.session_state.start_time)
             else:
                 elapsed = None
-            # 验证答案
+
             if q["type"] == "fill":
                 if not st.session_state.user_answer:
                     st.warning("请先输入答案！")
@@ -529,8 +533,8 @@ if st.session_state.questions and not st.session_state.quiz_finished:
                 if st.session_state.user_answer == q["answer"]:
                     correct = True
 
-            # 记录数据库
-            record_practice(user_id, question_id, correct, elapsed)
+            # 记录到数据库（传入知识点）
+            record_practice(st.session_state.user['id'], question_id, correct, knowledge_point, elapsed)
 
             if correct:
                 st.session_state.feedback = "🎉 回答正确！"
@@ -541,7 +545,7 @@ if st.session_state.questions and not st.session_state.quiz_finished:
                 st.session_state.wrong_list.append(wrong_q)
 
             st.session_state.submitted = True
-            st.session_state.start_time = time.time()  # 重置计时器
+            st.session_state.start_time = time.time()
             st.rerun()
 
     with col_next:
