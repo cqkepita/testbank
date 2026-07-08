@@ -43,12 +43,14 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, hashed: str) -> bool:
     return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
-def register_user(username: str, password: str, class_name: str, study_year: int) -> tuple[bool, str]:
+def register_user(username: str, password: str, major: str, class_name: str, study_year: int) -> tuple[bool, str]:
     """注册用户，返回 (成功标志, 消息)"""
     if len(username) < 3:
         return False, "用户名至少3个字符"
     if len(password) < 6:
         return False, "密码至少6个字符"
+    if not major:
+        return False, "专业不能为空"
     if not class_name:
         return False, "班级不能为空"
     if not study_year:
@@ -69,7 +71,7 @@ def register_user(username: str, password: str, class_name: str, study_year: int
         }).execute()
         if resp.data:
             # 更新总用户数统计（参数名 p_key 与数据库函数匹配）
-            supabase.rpc('increment_site_stats', {'p_key': 'total_users'}).execute()
+            supabase.rpc('increment_site_stats', {'stat_key': 'total_users'}).execute()
             return True, "注册成功，请登录"
         else:
             return False, "注册失败，请重试"
