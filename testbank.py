@@ -322,12 +322,14 @@ with st.sidebar:
                         st.warning("请填写完整")
         with tab2:
             with st.form("register_form"):
-                reg_username = st.text_input("姓名 (显示用)")
+                # ======== 修改处 ========
+                reg_username = st.text_input("姓名 (请填写真实姓名)")      # 原为 "姓名 (显示用)"
                 reg_password = st.text_input("密码 (至少6字符)", type="password")
-                reg_class = st.text_input("班级 (如：2023级1班)")
+                reg_class = st.text_input("班级 (如：1)")                 # 原为 "班级 (如：2023级1班)"
                 reg_year = st.number_input("入学年份", min_value=2000, max_value=2100, step=1, value=2026)
                 reg_major = st.text_input("专业 (如：工商管理)")
-                reg_student_id = st.text_input("学号 (唯一)")
+                reg_student_id = st.text_input("学号 (请正确填写)")        # 原为 "学号 (唯一)"
+                # =========================
                 reg_submit = st.form_submit_button("注册")
                 if reg_submit:
                     if reg_username and reg_password and reg_class and reg_year and reg_major and reg_student_id:
