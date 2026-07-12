@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-教学练习小程序 - 完整版（学号唯一、教师重置密码、错题重练使用错题本）
+教学练习小程序 - 完整版（含登录检查）
 """
 
 import streamlit as st
@@ -501,6 +501,12 @@ if st.session_state.get("show_dashboard", False):
 
 # ---------- 主区域答题 ----------
 if st.session_state.questions and not st.session_state.quiz_finished:
+    # 检查登录状态，未登录则清空题目并提示
+    if st.session_state.user is None:
+        st.warning("⚠️ 请登录后进行练习")
+        st.session_state.questions = []
+        st.stop()
+
     idx = st.session_state.current_idx
     total = len(st.session_state.questions)
     q = st.session_state.questions[idx]
@@ -542,6 +548,11 @@ if st.session_state.questions and not st.session_state.quiz_finished:
     col_sub, col_next = st.columns(2)
     with col_sub:
         if st.button("✅ 提交答案", use_container_width=True, disabled=st.session_state.submitted):
+            # 再次检查登录（防止绕过前面的检查）
+            if st.session_state.user is None:
+                st.error("❌ 请登录后再答题")
+                st.stop()
+
             if st.session_state.start_time:
                 elapsed = int(time.time() - st.session_state.start_time)
             else:
