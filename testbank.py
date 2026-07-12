@@ -69,7 +69,7 @@ def register_user(username: str, password: str, class_name: str, study_year: int
         }).execute()
         if resp.data:
             # 更新总用户数统计（参数名 p_key 与数据库函数匹配）
-            supabase.rpc('increment_site_stats', {'stat_key': 'total_users'}).execute()
+            supabase.rpc('increment_site_stats', {'p_key': 'total_users'}).execute()
             return True, "注册成功，请登录"
         else:
             return False, "注册失败，请重试"
@@ -148,7 +148,7 @@ def record_practice(user_id: str, question_id: int, is_correct: bool, knowledge_
 
 def get_site_stats():
     try:
-        resp = supabase.table('site_stats').select('stat_value').eq('stat_key', 'total_users').execute()
+        resp = supabase.table('site_stats').select('stat_value').eq('p_key', 'total_users').execute()
         if resp.data:
             return resp.data[0]['stat_value']
         return 0
