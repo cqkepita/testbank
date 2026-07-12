@@ -295,8 +295,8 @@ def init_session_state():
         st.session_state.show_dashboard = False
 
 # ---------- 主页面 ----------
-st.set_page_config(page_title="智能练习 · 教学平台", page_icon="📚", layout="centered")
-st.title("📖 智能练习 · 教学平台")
+st.set_page_config(page_title="管理学 · 智能练习平台", page_icon="📚", layout="centered")
+st.title("📖 管理学 · 智能练习平台")
 
 init_session_state()
 
@@ -351,7 +351,7 @@ with st.sidebar:
 
     # 2. 练习控制
     st.markdown("---")
-    st.subheader("🎯 练习控制")
+    st.subheader("🎯 练习控制台")
     chapters = ["全部"] + sorted(set(q["chapter"] for q in QUESTION_BANK))
     selected_chapter = st.selectbox("选择章节", chapters, key="chapter_select")
     knowledge_options = get_available_knowledge(selected_chapter if selected_chapter != "全部" else None)
@@ -374,29 +374,20 @@ with st.sidebar:
                 st.session_state.start_time = time.time()
                 st.rerun()
     with col2:
-        if st.button("📕 错题重练", use_container_width=True):
-            if not st.session_state.wrong_list:
-                st.sidebar.info("错题本为空")
-            else:
-                wrong_knowledges = set(q["knowledge"] for q in st.session_state.wrong_list)
-                new_questions = []
-                for kw in wrong_knowledges:
-                    pool = filter_questions(knowledge=kw)
-                    if pool:
-                        sample_size = min(2, len(pool))
-                        new_questions.extend(random.sample(pool, sample_size))
-                if not new_questions:
-                    st.sidebar.warning("找不到对应知识点的题目")
-                else:
-                    random.shuffle(new_questions)
-                    st.session_state.questions = new_questions
-                    st.session_state.current_idx = 0
-                    st.session_state.user_answer = None
-                    st.session_state.submitted = False
-                    st.session_state.feedback = None
-                    st.session_state.quiz_finished = False
-                    st.session_state.start_time = time.time()
-                    st.rerun()
+    if st.button("📕 错题重练", use_container_width=True):
+        if not st.session_state.wrong_list:
+            st.sidebar.info("错题本为空")
+        else:
+            wrong_questions = st.session_state.wrong_list[:]
+            random.shuffle(wrong_questions)
+            st.session_state.questions = wrong_questions
+            st.session_state.current_idx = 0
+            st.session_state.user_answer = None
+            st.session_state.submitted = False
+            st.session_state.feedback = None
+            st.session_state.quiz_finished = False
+            st.session_state.start_time = time.time()
+            st.rerun()
 
     # 3. 统计与错题本
     st.markdown("---")
