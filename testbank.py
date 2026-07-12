@@ -90,6 +90,10 @@ def login_user(login_id: str, password: str) -> tuple[bool, str, dict]:
         return False, "密码错误", {}
 
 def record_practice(user_id: str, question_id: int, is_correct: bool, knowledge_point: str, chapter: str, time_spent: int = None):
+    # ========== 新增：获取当前选中的课程 ==========
+    course = st.session_state.get("course", "管理学（马工程）")
+    
+    # ========== 1. 记录到练习日志（新增 course 字段） ==========
     try:
         data = {
             'user_id': user_id,
@@ -97,12 +101,14 @@ def record_practice(user_id: str, question_id: int, is_correct: bool, knowledge_
             'is_correct': is_correct,
             'answered_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
             'knowledge_point': knowledge_point,
-            'chapter': chapter
+            'chapter': chapter,
+            'course': course  # <--- 这里存入了课程名称
         }
         if time_spent:
             data['time_spent'] = time_spent
         supabase.table('practice_logs').insert(data).execute()
 
+        # ========== 2. 更新题目统计（这部分原样不动） ==========
         resp = supabase.table('question_stats').select('*').eq('question_id', question_id).execute()
         if resp.data:
             stats = resp.data[0]
@@ -121,7 +127,10 @@ def record_practice(user_id: str, question_id: int, is_correct: bool, knowledge_
                 'last_updated': datetime.datetime.now(datetime.timezone.utc).isoformat()
             }).execute()
 
-        resp = supabase.table('user_progress').select('*').eq('user_id', user_id).eq('knowledge_point', knowledge_point).execute()
+        # ========== 3. 更新用户知识点进度（关键改动：加上课程前缀，防止两门课互相覆盖） ==========
+        full_knowledge = f"{course}|{knowledge_point}"  # 例如：管理学（马工程）|计划
+        
+        resp = supabase.table('user_progress').select('*').eq('user_id', user_id).eq('knowledge_point', full_knowledge).execute()
         if resp.data:
             prog = resp.data[0]
             total = prog['total_attempts'] + 1
@@ -135,7 +144,7 @@ def record_practice(user_id: str, question_id: int, is_correct: bool, knowledge_
         else:
             supabase.table('user_progress').insert({
                 'user_id': user_id,
-                'knowledge_point': knowledge_point,
+                'knowledge_point': full_knowledge,  # 存入带前缀的知识点
                 'correct_rate': 1.0 if is_correct else 0.0,
                 'total_attempts': 1,
                 'last_practiced': datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -617,7 +626,7 @@ if st.session_state.questions and not st.session_state.quiz_finished:
                     correct = True
 
             # 记录练习数据
-            record_practice(st.session_state.user['id'], question_id, correct, knowledge_point, chapter, elapsed)
+            record_practice(st.session_state.user['id'], question_id, correct, knowledge_point, chapter, st.session_state.get("course", "管理学（马工程）"), elapsed)
 
             # 错题本逻辑（去重+自动移除）
             if correct:
