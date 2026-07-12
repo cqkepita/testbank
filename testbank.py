@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-教学练习小程序 - 完整版（错题本去重+自动移除）
+教学练习小程序 - 支持多课程（V1.1）
 """
 
 import streamlit as st
@@ -196,15 +196,25 @@ def reset_user_password(admin_pw: str, student_id: str, new_password: str) -> tu
     except Exception as e:
         return False, f"重置失败: {str(e)}"
 
-# ---------- 题库加载 ----------
+# ---------- 题库加载（支持多课程） ----------
 @st.cache_data(ttl=600)
-def load_questions():
+def load_questions(course: str):
+    """
+    根据课程名称加载对应的题库文件。
+    课程映射：
+        - 管理学（马工程） -> chapter*.json
+        - 管理学（英文）   -> en_chapter*.json
+    """
     base_dir = os.path.dirname(__file__)
-    pattern = os.path.join(base_dir, "chapter*.json")
+    if course == "管理学（英文）":
+        prefix = "en_chapter"
+    else:
+        prefix = "chapter"   # 默认马工程
+    pattern = os.path.join(base_dir, f"{prefix}*.json")
     file_list = glob.glob(pattern)
     all_questions = []
     if not file_list:
-        st.error("❌ 未找到任何 chapter*.json 文件")
+        st.warning(f"⚠️ 未找到课程 '{course}' 的题库文件（{prefix}*.json）")
         return []
 
     for file_path in sorted(file_list):
@@ -224,16 +234,19 @@ def load_questions():
                     all_questions.append(q)
         except Exception as e:
             st.error(f"读取 {file_path} 失败：{e}")
-    st.success(f"✅ 成功加载 {len(all_questions)} 道题目")
     return all_questions
 
-QUESTION_BANK = load_questions()
+def get_current_question_bank():
+    """获取当前课程对应的题库（基于 session_state）"""
+    course = st.session_state.get("course", "管理学（马工程）")
+    return load_questions(course)
 
-# ---------- 辅助函数 ----------
+# ---------- 辅助函数（基于当前题库） ----------
 def filter_questions(chapter=None, knowledge=None):
-    if not QUESTION_BANK:
+    bank = get_current_question_bank()
+    if not bank:
         return []
-    filtered = QUESTION_BANK
+    filtered = bank
     if chapter and chapter != "全部":
         filtered = [q for q in filtered if q["chapter"] == chapter]
     if knowledge and knowledge != "全部" and knowledge is not None:
@@ -241,12 +254,13 @@ def filter_questions(chapter=None, knowledge=None):
     return filtered
 
 def get_available_knowledge(chapter=None):
-    if not QUESTION_BANK:
+    bank = get_current_question_bank()
+    if not bank:
         return []
     if chapter is None or chapter == "全部":
-        knowledges = sorted(set(q["knowledge"] for q in QUESTION_BANK))
+        knowledges = sorted(set(q["knowledge"] for q in bank))
     else:
-        knowledges = sorted(set(q["knowledge"] for q in QUESTION_BANK if q["chapter"] == chapter))
+        knowledges = sorted(set(q["knowledge"] for q in bank if q["chapter"] == chapter))
     return ["全部"] + knowledges
 
 def pick_questions(chapter, knowledge, count=None):
@@ -283,6 +297,8 @@ def init_session_state():
         st.session_state.start_time = None
     if "show_dashboard" not in st.session_state:
         st.session_state.show_dashboard = False
+    if "course" not in st.session_state:
+        st.session_state.course = "管理学（马工程）"   # 默认课程
 
 # ---------- 主页面 ----------
 st.set_page_config(page_title="管理学 · 智能练习平台", page_icon="📚", layout="centered")
@@ -339,10 +355,32 @@ with st.sidebar:
                     else:
                         st.warning("请填写完整信息")
 
-    # 2. 练习控制台
+    # 2. 选择课程（新增）
+    st.markdown("---")
+    st.subheader("📚 选择课程")
+    course_options = ["管理学（马工程）", "管理学（英文）"]
+    current_course = st.session_state.get("course", "管理学（马工程）")
+    selected_course = st.selectbox(
+        "课程",
+        course_options,
+        index=course_options.index(current_course) if current_course in course_options else 0,
+        key="course_select"
+    )
+    if selected_course != st.session_state.get("course"):
+        # 课程变化：清空题目和错题本，防止混淆
+        st.session_state.course = selected_course
+        st.session_state.questions = []
+        st.session_state.wrong_list = []
+        st.session_state.current_idx = 0
+        st.session_state.quiz_finished = False
+        st.rerun()
+
+    # 3. 练习控制台
     st.markdown("---")
     st.subheader("🎯 练习控制台")
-    chapters = ["全部"] + sorted(set(q["chapter"] for q in QUESTION_BANK))
+    # 获取当前题库的章节列表
+    current_bank = get_current_question_bank()
+    chapters = ["全部"] + sorted(set(q["chapter"] for q in current_bank))
     selected_chapter = st.selectbox("选择章节", chapters, key="chapter_select")
     knowledge_options = get_available_knowledge(selected_chapter if selected_chapter != "全部" else None)
     selected_knowledge = st.selectbox("选择知识点", knowledge_options, key="knowledge_select")
@@ -379,7 +417,7 @@ with st.sidebar:
                 st.session_state.start_time = time.time()
                 st.rerun()
 
-    # 3. 统计与错题本
+    # 4. 统计与错题本
     st.markdown("---")
     st.subheader("📊 统计")
     if st.session_state.user:
@@ -408,7 +446,7 @@ with st.sidebar:
                     if wrong_q.get("explanation"):
                         st.info(f"💡 解析: {wrong_q['explanation']}")
 
-    # 4. 教师看板
+    # 5. 教师看板
     st.markdown("---")
     with st.expander("🔐 教师看板 (需密码)"):
         admin_pw = st.text_input("管理员密码", type="password", key="admin_pw_input")
@@ -450,7 +488,9 @@ if st.session_state.get("show_dashboard", False):
             years = sorted(set([row['study_year'] for row in years_resp.data if row['study_year']]), reverse=True)
             majors_resp = supabase.table('users').select('major').execute()
             majors = sorted(set([row['major'] for row in majors_resp.data if row['major']]))
-            all_chapters = sorted(set(q['chapter'] for q in QUESTION_BANK))
+            # 章节列表基于当前课程题库
+            current_bank = get_current_question_bank()
+            all_chapters = sorted(set(q['chapter'] for q in current_bank))
         except Exception as e:
             classes, years, majors, all_chapters = [], [], [], []
             st.error(f"获取筛选选项失败: {e}")
@@ -477,7 +517,8 @@ if st.session_state.get("show_dashboard", False):
         st.metric("总注册用户", total_users)
         st.subheader("🔝 高频错题 TOP 10")
         if top_wrong:
-            id_to_question = {q['id']: q for q in QUESTION_BANK}
+            # 使用当前题库查找题目文本（注意：若错题来自其他课程，可能找不到，显示ID）
+            id_to_question = {q['id']: q for q in get_current_question_bank()}
             for item in top_wrong:
                 qid = item['question_id']
                 wrongs = item['wrong_count']
@@ -486,7 +527,7 @@ if st.session_state.get("show_dashboard", False):
                 if q:
                     st.write(f"**ID {qid}** ({kp}): {q['question'][:50]}... (错误 {wrongs} 次)")
                 else:
-                    st.write(f"**ID {qid}** ({kp}): 题目已删除 (错误 {wrongs} 次)")
+                    st.write(f"**ID {qid}** ({kp}): 题目已删除或不在当前课程中 (错误 {wrongs} 次)")
         else:
             st.info("暂无数据")
         st.subheader("📈 知识点平均正确率")
@@ -548,7 +589,7 @@ if st.session_state.questions and not st.session_state.quiz_finished:
     col_sub, col_next = st.columns(2)
     with col_sub:
         if st.button("✅ 提交答案", use_container_width=True, disabled=st.session_state.submitted):
-            # 再次检查登录（防止绕过前面的检查）
+            # 再次检查登录
             if st.session_state.user is None:
                 st.error("❌ 请登录后再答题")
                 st.stop()
@@ -575,17 +616,15 @@ if st.session_state.questions and not st.session_state.quiz_finished:
                 if st.session_state.user_answer == q["answer"]:
                     correct = True
 
-            # 记录练习数据（始终记录）
+            # 记录练习数据
             record_practice(st.session_state.user['id'], question_id, correct, knowledge_point, chapter, elapsed)
 
-            # ================== 错题本逻辑（去重+自动移除） ==================
+            # 错题本逻辑（去重+自动移除）
             if correct:
                 st.session_state.feedback = "🎉 回答正确！"
-                # 如果该题在错题本中，移除它
                 st.session_state.wrong_list = [w for w in st.session_state.wrong_list if w['id'] != q['id']]
             else:
                 st.session_state.feedback = "❌ 回答错误"
-                # 检查是否已在错题本中，避免重复
                 existing = any(w['id'] == q['id'] for w in st.session_state.wrong_list)
                 if not existing:
                     wrong_q = q.copy()
@@ -639,4 +678,4 @@ else:
     st.write("所有答题数据将自动记录，用于生成统计报告。")
 
 st.divider()
-st.caption("教学练习平台 · 完整版 · 数据驱动学习")
+st.caption("教学练习平台 · V1.1 · 支持多课程")
