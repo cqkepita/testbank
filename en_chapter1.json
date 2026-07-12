@@ -1,0 +1,504 @@
+[
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Who Is a Manager?",
+    "question": "An individual who coordinates and oversees the work of other people so that organizational goals can be accomplished is ________.",
+    "options": [
+      "an assembly line worker",
+      "a laborer",
+      "a manager",
+      "a salesperson"
+    ],
+    "answer": 2,
+    "explanation": "A manager is someone who coordinates and oversees the work of other people so that organizational goals can be accomplished.[reference:0]",
+    "id": 1001
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Who Is a Manager?",
+    "question": "In today's workplace, ________.",
+    "options": [
+      "women are more likely than men to be promoted into management",
+      "many employees perform work that in the past was considered managerial activities",
+      "women tend to be more effective supervisors than men",
+      "most organizations have eliminated the title of manager"
+    ],
+    "answer": 1,
+    "explanation": "In today's workplace, many employees perform work that in the past was considered managerial activities.[reference:2][reference:3]",
+    "id": 1002
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Who Is a Manager?",
+    "question": "A manager's job focuses on ________.",
+    "options": [
+      "performing clerical duties",
+      "personal achievement",
+      "helping others accomplish their work goals",
+      "supervising groups rather than individual employees"
+    ],
+    "answer": 2,
+    "explanation": "A manager's job focuses on helping others accomplish their work goals.[reference:4][reference:5]",
+    "id": 1003
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Classifying Managers",
+    "question": "Which of the following is another name for first-line managers?",
+    "options": [
+      "Team leader",
+      "Middle manager",
+      "Supervisor",
+      "Top manager"
+    ],
+    "answer": 2,
+    "explanation": "Supervisor is another name for first-line manager.[reference:6]",
+    "id": 1004
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Classifying Managers",
+    "question": "First-line managers are typically those who ________.",
+    "options": [
+      "perform the same work as the people they manage but earn more money",
+      "are typically involved with producing the organization's products or providing its service",
+      "are at the top of the organizational chart",
+      "are the first persons new hires meet"
+    ],
+    "answer": 1,
+    "explanation": "First-line managers are typically involved with producing the organization's products or providing its service.[reference:7]",
+    "id": 1005
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Classifying Managers",
+    "question": "Which level of managers is responsible for making organization-wide decisions and establishing plans and goals that affect the entire organization?",
+    "options": [
+      "First-line managers",
+      "Middle managers",
+      "Supervisors",
+      "Top managers"
+    ],
+    "answer": 3,
+    "explanation": "Top managers are responsible for making organization-wide decisions and establishing plans and goals that affect the entire organization.",
+    "id": 1006
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Management Functions",
+    "question": "Which of the following is NOT one of the four management functions?",
+    "options": [
+      "Planning",
+      "Organizing",
+      "Controlling",
+      "Coordinating"
+    ],
+    "answer": 3,
+    "explanation": "The four management functions are planning, organizing, leading, and controlling. Coordinating is not one of the four functions.[reference:9]",
+    "id": 1007
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Management Functions",
+    "question": "The management function of defining goals, establishing strategies to achieve goals, and developing plans to integrate and coordinate activities is called ________.",
+    "options": [
+      "Planning",
+      "Organizing",
+      "Leading",
+      "Controlling"
+    ],
+    "answer": 0,
+    "explanation": "Planning involves defining goals, establishing strategies to achieve goals, and developing plans to integrate and coordinate activities.[reference:10]",
+    "id": 1008
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Management Functions",
+    "question": "The management function that involves arranging and structuring work to accomplish the organization's goals is ________.",
+    "options": [
+      "Planning",
+      "Organizing",
+      "Leading",
+      "Controlling"
+    ],
+    "answer": 1,
+    "explanation": "Organizing involves arranging and structuring work to accomplish the organization's goals.",
+    "id": 1009
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Management Functions",
+    "question": "The management function that involves monitoring, comparing, and correcting work performance is ________.",
+    "options": [
+      "Planning",
+      "Organizing",
+      "Leading",
+      "Controlling"
+    ],
+    "answer": 3,
+    "explanation": "Controlling involves monitoring, comparing, and correcting work performance.",
+    "id": 1010
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Mintzberg's Managerial Roles",
+    "question": "According to Mintzberg's managerial roles, which of the following is an interpersonal role?",
+    "options": [
+      "Figurehead",
+      "Monitor",
+      "Resource allocator",
+      "Negotiator"
+    ],
+    "answer": 0,
+    "explanation": "The interpersonal roles include figurehead, leader, and liaison. Monitor is an informational role; resource allocator and negotiator are decisional roles.",
+    "id": 1011
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Mintzberg's Managerial Roles",
+    "question": "According to Mintzberg's managerial roles, which of the following is an informational role?",
+    "options": [
+      "Leader",
+      "Disseminator",
+      "Entrepreneur",
+      "Disturbance handler"
+    ],
+    "answer": 1,
+    "explanation": "The informational roles include monitor, disseminator, and spokesperson. Leader is an interpersonal role; entrepreneur and disturbance handler are decisional roles.",
+    "id": 1012
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Mintzberg's Managerial Roles",
+    "question": "According to Mintzberg's managerial roles, which of the following is a decisional role?",
+    "options": [
+      "Liaison",
+      "Spokesperson",
+      "Negotiator",
+      "Figurehead"
+    ],
+    "answer": 2,
+    "explanation": "The decisional roles include entrepreneur, disturbance handler, resource allocator, and negotiator. Liaison and figurehead are interpersonal roles; spokesperson is an informational role.",
+    "id": 1013
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Management Skills",
+    "question": "Which type of skills are more important for first-line managers than for top managers?",
+    "options": [
+      "Technical skills",
+      "Human skills",
+      "Conceptual skills",
+      "Decision-making skills"
+    ],
+    "answer": 0,
+    "explanation": "Technical skills are more important for first-line managers than for top managers, as they work more directly with employees and processes.",
+    "id": 1014
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Management Skills",
+    "question": "Which type of skills are equally important for all levels of management?",
+    "options": [
+      "Technical skills",
+      "Human skills",
+      "Conceptual skills",
+      "Strategic skills"
+    ],
+    "answer": 1,
+    "explanation": "Human skills are equally important for all levels of management because managers at all levels work with people.",
+    "id": 1015
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Management Skills",
+    "question": "Which type of skills become more important as managers move up the organizational hierarchy?",
+    "options": [
+      "Technical skills",
+      "Human skills",
+      "Conceptual skills",
+      "Operational skills"
+    ],
+    "answer": 2,
+    "explanation": "Conceptual skills become more important as managers move up the organizational hierarchy, as they need to think strategically and see the big picture.",
+    "id": 1016
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Importance of Managers",
+    "question": "Why are managers important to organizations?",
+    "options": [
+      "They perform clerical duties that others cannot do",
+      "They are responsible for creating the organization's products",
+      "They play an important role in dealing with various challenges being faced by organizations today",
+      "They are the only ones who make decisions"
+    ],
+    "answer": 2,
+    "explanation": "Managers play an important role in dealing with various challenges being faced by organizations today.[reference:11]",
+    "id": 1017
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Organizational Structure",
+    "question": "An organizational chart that shows titles such as front-line manager, plant manager, and vice president of operations is likely to have a ________.",
+    "options": [
+      "traditional committee structure",
+      "traditional pyramid structure",
+      "modern matrix structure",
+      "flexible structure"
+    ],
+    "answer": 1,
+    "explanation": "An organizational chart showing titles such as front-line manager, plant manager, and vice president of operations indicates a traditional pyramid structure.[reference:12]",
+    "id": 1018
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Efficiency and Effectiveness",
+    "question": "Getting the most output from the least amount of inputs is called ________.",
+    "options": [
+      "Effectiveness",
+      "Efficiency",
+      "Productivity",
+      "Quality"
+    ],
+    "answer": 1,
+    "explanation": "Efficiency is getting the most output from the least amount of inputs. Effectiveness is doing the right things to achieve organizational goals.[reference:13]",
+    "id": 1019
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Efficiency and Effectiveness",
+    "question": "Doing the right things to achieve organizational goals is called ________.",
+    "options": [
+      "Effectiveness",
+      "Efficiency",
+      "Productivity",
+      "Quality"
+    ],
+    "answer": 0,
+    "explanation": "Effectiveness is doing the right things to achieve organizational goals. Efficiency is getting the most output from the least amount of inputs.[reference:14]",
+    "id": 1020
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Who Is a Manager?",
+    "question": "A manager is someone who coordinates and oversees the work of other people so that organizational goals can be accomplished.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 0,
+    "explanation": "A manager is defined as someone who coordinates and oversees the work of other people so that organizational goals can be accomplished.",
+    "id": 1021
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Classifying Managers",
+    "question": "Supervisor is another name for middle manager.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 1,
+    "explanation": "Supervisor is another name for first-line manager, not middle manager.[reference:16]",
+    "id": 1022
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Management Functions",
+    "question": "The four management functions are planning, organizing, leading, and controlling.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 0,
+    "explanation": "The four management functions are planning, organizing, leading, and controlling.[reference:17]",
+    "id": 1023
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Management Functions",
+    "question": "Leading involves monitoring, comparing, and correcting work performance.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 1,
+    "explanation": "Controlling involves monitoring, comparing, and correcting work performance. Leading involves motivating, leading, and directing employees.",
+    "id": 1024
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Management Skills",
+    "question": "Technical skills are more important for top managers than for first-line managers.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 1,
+    "explanation": "Technical skills are more important for first-line managers than for top managers. Conceptual skills become more important as managers move up the hierarchy.",
+    "id": 1025
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Management Skills",
+    "question": "Human skills are equally important for all levels of management.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 0,
+    "explanation": "Human skills are equally important for all levels of management because managers at all levels work with people.",
+    "id": 1026
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Efficiency and Effectiveness",
+    "question": "Efficiency is doing the right things to achieve organizational goals.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 1,
+    "explanation": "Effectiveness is doing the right things to achieve organizational goals. Efficiency is getting the most output from the least amount of inputs.[reference:18]",
+    "id": 1027
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Mintzberg's Managerial Roles",
+    "question": "According to Mintzberg, figurehead is an informational role.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 1,
+    "explanation": "According to Mintzberg, figurehead is an interpersonal role, not an informational role. Informational roles include monitor, disseminator, and spokesperson.",
+    "id": 1028
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Importance of Managers",
+    "question": "A great manager can inspire employees professionally and personally.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 0,
+    "explanation": "A great manager can inspire employees professionally and personally.[reference:19]",
+    "id": 1029
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Organizational Structure",
+    "question": "In traditionally structured organizations, managers can be classified as first-line, middle, or top.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 0,
+    "explanation": "In traditionally structured organizations, managers can be classified as first-line, middle, or top.",
+    "id": 1030
+  },
+  {
+    "type": "fill",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Who Is a Manager?",
+    "question": "Someone who coordinates and oversees the work of other people so that organizational goals can be accomplished is called a ________.",
+    "answer": "manager",
+    "explanation": "A manager coordinates and oversees the work of other people so that organizational goals can be accomplished.",
+    "id": 1031
+  },
+  {
+    "type": "fill",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Classifying Managers",
+    "question": "________ managers manage the work of non-managerial employees.",
+    "answer": "First-line",
+    "explanation": "First-line managers manage the work of non-managerial employees.",
+    "id": 1032
+  },
+  {
+    "type": "fill",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Classifying Managers",
+    "question": "________ managers manage the work of first-line managers.",
+    "answer": "Middle",
+    "explanation": "Middle managers manage the work of first-line managers.",
+    "id": 1033
+  },
+  {
+    "type": "fill",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Classifying Managers",
+    "question": "________ managers are responsible for making organization-wide decisions and establishing plans and goals that affect the entire organization.",
+    "answer": "Top",
+    "explanation": "Top managers are responsible for making organization-wide decisions and establishing plans and goals that affect the entire organization.",
+    "id": 1034
+  },
+  {
+    "type": "fill",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Management Functions",
+    "question": "The four management functions are planning, organizing, ________, and controlling.",
+    "answer": "leading",
+    "explanation": "The four management functions are planning, organizing, leading, and controlling.[reference:25]",
+    "id": 1035
+  },
+  {
+    "type": "fill",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Efficiency and Effectiveness",
+    "question": "Getting the most output from the least amount of inputs is called ________.",
+    "answer": "efficiency",
+    "explanation": "Efficiency is getting the most output from the least amount of inputs.[reference:26]",
+    "id": 1036
+  },
+  {
+    "type": "fill",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Efficiency and Effectiveness",
+    "question": "Doing the right things to achieve organizational goals is called ________.",
+    "answer": "effectiveness",
+    "explanation": "Effectiveness is doing the right things to achieve organizational goals.[reference:27]",
+    "id": 1037
+  },
+  {
+    "type": "fill",
+    "chapter": "Chapter 1 Managers and You in the Workplace",
+    "knowledge": "Mintzberg's Managerial Roles",
+    "question": "According to Mintzberg, the three categories of managerial roles are interpersonal, informational, and ________.",
+    "answer": "decisional",
+    "explanation": "Mintzberg's three categories of managerial roles are interpersonal, informational, and decisional.",
+    "id": 1038
+  }
+]
