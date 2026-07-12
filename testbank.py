@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-教学练习小程序 - 完整版（含登录检查）
+教学练习小程序 - 完整版（错题本去重+自动移除）
 """
 
 import streamlit as st
@@ -322,14 +322,12 @@ with st.sidebar:
                         st.warning("请填写完整")
         with tab2:
             with st.form("register_form"):
-                # ======== 修改处 ========
-                reg_username = st.text_input("姓名 (请填写真实姓名)")      # 原为 "姓名 (显示用)"
+                reg_username = st.text_input("姓名 (请填写真实姓名)")
                 reg_password = st.text_input("密码 (至少6字符)", type="password")
-                reg_class = st.text_input("班级 (如：1)")                 # 原为 "班级 (如：2023级1班)"
+                reg_class = st.text_input("班级 (如：1)")
                 reg_year = st.number_input("入学年份", min_value=2000, max_value=2100, step=1, value=2026)
                 reg_major = st.text_input("专业 (如：工商管理)")
-                reg_student_id = st.text_input("学号 (请正确填写)")        # 原为 "学号 (唯一)"
-                # =========================
+                reg_student_id = st.text_input("学号 (请正确填写)")
                 reg_submit = st.form_submit_button("注册")
                 if reg_submit:
                     if reg_username and reg_password and reg_class and reg_year and reg_major and reg_student_id:
@@ -577,15 +575,22 @@ if st.session_state.questions and not st.session_state.quiz_finished:
                 if st.session_state.user_answer == q["answer"]:
                     correct = True
 
+            # 记录练习数据（始终记录）
             record_practice(st.session_state.user['id'], question_id, correct, knowledge_point, chapter, elapsed)
 
+            # ================== 错题本逻辑（去重+自动移除） ==================
             if correct:
                 st.session_state.feedback = "🎉 回答正确！"
+                # 如果该题在错题本中，移除它
+                st.session_state.wrong_list = [w for w in st.session_state.wrong_list if w['id'] != q['id']]
             else:
                 st.session_state.feedback = "❌ 回答错误"
-                wrong_q = q.copy()
-                wrong_q["user_answer"] = st.session_state.user_answer
-                st.session_state.wrong_list.append(wrong_q)
+                # 检查是否已在错题本中，避免重复
+                existing = any(w['id'] == q['id'] for w in st.session_state.wrong_list)
+                if not existing:
+                    wrong_q = q.copy()
+                    wrong_q["user_answer"] = st.session_state.user_answer
+                    st.session_state.wrong_list.append(wrong_q)
 
             st.session_state.submitted = True
             st.session_state.start_time = time.time()
