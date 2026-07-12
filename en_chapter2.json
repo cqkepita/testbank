@@ -1,0 +1,419 @@
+[
+  {
+    "type": "choice",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Historical Background",
+    "question": "Which of the following is considered an early example of management practice?",
+    "options": [
+      "The construction of the Egyptian pyramids",
+      "The invention of the steam engine",
+      "The development of the computer",
+      "The creation of the internet"
+    ],
+    "answer": 0,
+    "explanation": "The construction of the Egyptian pyramids is a classic example of early management practice, requiring planning, organizing, and coordination of a large workforce.",
+    "id": 2001
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Historical Background",
+    "question": "Who wrote 'The Wealth of Nations' and argued for the economic benefits of division of labor?",
+    "options": [
+      "Adam Smith",
+      "Frederick Taylor",
+      "Henri Fayol",
+      "Max Weber"
+    ],
+    "answer": 0,
+    "explanation": "Adam Smith, in 'The Wealth of Nations' (1776), argued for the economic advantages of division of labor.",
+    "id": 2002
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Scientific Management",
+    "question": "The father of scientific management is ________.",
+    "options": [
+      "Frank Gilbreth",
+      "Frederick W. Taylor",
+      "Henri Fayol",
+      "Max Weber"
+    ],
+    "answer": 1,
+    "explanation": "Frederick W. Taylor is widely known as the father of scientific management for his work on improving worker productivity through time-and-motion studies.",
+    "id": 2003
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Scientific Management",
+    "question": "Taylor's most famous work is the book titled ________.",
+    "options": [
+      "The Wealth of Nations",
+      "The Principles of Scientific Management",
+      "General and Industrial Management",
+      "The Theory of Social and Economic Organization"
+    ],
+    "answer": 1,
+    "explanation": "Taylor published 'The Principles of Scientific Management' in 1911, outlining his four principles of scientific management.",
+    "id": 2004
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Scientific Management",
+    "question": "The Gilbreths are best known for their work on ________.",
+    "options": [
+      "management functions",
+      "bureaucratic organization",
+      "motion studies",
+      "human relations"
+    ],
+    "answer": 2,
+    "explanation": "Frank and Lillian Gilbreth conducted motion studies to eliminate inefficient hand-and-body motions, and they also developed the classification system known as therbligs.",
+    "id": 2005
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "General Administrative Theory",
+    "question": "Who defined the five primary management functions: planning, organizing, commanding, coordinating, and controlling?",
+    "options": [
+      "Frederick Taylor",
+      "Max Weber",
+      "Henri Fayol",
+      "Adam Smith"
+    ],
+    "answer": 2,
+    "explanation": "Henri Fayol, a French industrialist, defined five management functions: planning, organizing, commanding, coordinating, and controlling.",
+    "id": 2006
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "General Administrative Theory",
+    "question": "Which of the following is NOT one of Fayol's 14 principles of management?",
+    "options": [
+      "Division of work",
+      "Unity of command",
+      "Scalar chain",
+      "Scientific selection"
+    ],
+    "answer": 3,
+    "explanation": "Scientific selection is a principle from Taylor's scientific management, not Fayol's 14 principles. Fayol's principles include division of work, unity of command, scalar chain, and others.",
+    "id": 2007
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "General Administrative Theory",
+    "question": "Max Weber is known for his theory of ________.",
+    "options": [
+      "scientific management",
+      "bureaucracy",
+      "human relations",
+      "systems management"
+    ],
+    "answer": 1,
+    "explanation": "Max Weber developed the theory of bureaucracy, describing an ideal type of organization characterized by division of labor, clear hierarchy, formal rules, and impersonality.",
+    "id": 2008
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Behavioral Approach",
+    "question": "The Hawthorne Studies were conducted at the Western Electric Company's Hawthorne Works in ________.",
+    "options": [
+      "Detroit",
+      "Chicago",
+      "New York",
+      "Cleveland"
+    ],
+    "answer": 1,
+    "explanation": "The Hawthorne Studies were conducted at the Western Electric Company's Hawthorne Works in Chicago (1924-1932).",
+    "id": 2009
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Behavioral Approach",
+    "question": "The Hawthorne Studies concluded that ________.",
+    "options": [
+      "worker productivity was solely determined by physical conditions",
+      "social norms and group standards influenced individual output",
+      "financial incentives were the only motivator",
+      "management was irrelevant to productivity"
+    ],
+    "answer": 1,
+    "explanation": "The Hawthorne Studies revealed that social norms and group standards significantly influenced individual output, highlighting the importance of human factors in productivity.",
+    "id": 2010
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Behavioral Approach",
+    "question": "The Hawthorne Studies gave rise to the ________ movement.",
+    "options": [
+      "scientific management",
+      "human relations",
+      "management science",
+      "total quality"
+    ],
+    "answer": 1,
+    "explanation": "The findings of the Hawthorne Studies led to the human relations movement, which emphasized the importance of social and psychological factors in the workplace.",
+    "id": 2011
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Behavioral Approach",
+    "question": "Abraham Maslow is known for his ________.",
+    "options": [
+      "Theory X and Theory Y",
+      "hierarchy of needs theory",
+      "two-factor theory",
+      "scientific management principles"
+    ],
+    "answer": 1,
+    "explanation": "Abraham Maslow proposed the hierarchy of needs theory, which suggests that human needs are arranged in a hierarchical order from physiological to self-actualization.",
+    "id": 2012
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Behavioral Approach",
+    "question": "Which manager theorist proposed Theory X and Theory Y?",
+    "options": [
+      "Douglas McGregor",
+      "Abraham Maslow",
+      "Frederick Herzberg",
+      "Elton Mayo"
+    ],
+    "answer": 0,
+    "explanation": "Douglas McGregor proposed Theory X (negative view of workers) and Theory Y (positive view of workers) in his book 'The Human Side of Enterprise'.",
+    "id": 2013
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Management Science",
+    "question": "The management science approach is also known as the ________ approach.",
+    "options": [
+      "scientific management",
+      "quantitative",
+      "behavioral",
+      "contingency"
+    ],
+    "answer": 1,
+    "explanation": "The management science approach is also called the quantitative approach, as it uses mathematical and statistical techniques to solve management problems.",
+    "id": 2014
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Systems Approach",
+    "question": "A system that interacts with its environment is called a(n) ________ system.",
+    "options": [
+      "closed",
+      "open",
+      "controlled",
+      "isolated"
+    ],
+    "answer": 1,
+    "explanation": "An open system interacts with its environment, receiving inputs and delivering outputs. A closed system is not influenced by or does not interact with its environment.",
+    "id": 2015
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Contingency Approach",
+    "question": "The contingency approach to management states that ________.",
+    "options": [
+      "there is one best way to manage",
+      "management principles apply universally",
+      "management practices should be consistent with the circumstances",
+      "effective management depends on strict rules"
+    ],
+    "answer": 2,
+    "explanation": "The contingency approach suggests that management practices should be tailored to the specific circumstances, as there is no one best way to manage.",
+    "id": 2016
+  },
+  {
+    "type": "choice",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Contingency Approach",
+    "question": "Which of the following is a key variable that influences management practice according to the contingency approach?",
+    "options": [
+      "Organization size",
+      "Routineness of task technology",
+      "Environmental uncertainty",
+      "All of the above"
+    ],
+    "answer": 3,
+    "explanation": "Contingency variables include organization size, task technology, environmental uncertainty, and individual differences.",
+    "id": 2017
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Historical Background",
+    "question": "Adam Smith argued that division of labor increases productivity by increasing each worker's skill and dexterity.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 0,
+    "explanation": "Adam Smith argued that division of labor improves productivity by increasing each worker's skill, saving time, and enabling the invention of machinery.",
+    "id": 2018
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Scientific Management",
+    "question": "Frederick Taylor believed that workers should be given maximum control over their work methods.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 1,
+    "explanation": "Taylor believed that management should take over the responsibility for planning and work methods, not workers. He advocated for clear division of work responsibilities between management and workers.",
+    "id": 2019
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "General Administrative Theory",
+    "question": "Henri Fayol's 14 principles of management include initiative and equity.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 0,
+    "explanation": "Fayol's principles include initiative, equity, and many others such as authority, discipline, and order.",
+    "id": 2020
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "General Administrative Theory",
+    "question": "Max Weber's bureaucratic model is based on the concept of rational-legal authority.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 0,
+    "explanation": "Weber's bureaucratic model relies on rational-legal authority, where authority is derived from the position's rules and procedures, not from the person.",
+    "id": 2021
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Behavioral Approach",
+    "question": "The Hawthorne Studies were originally designed to examine the effects of lighting on worker productivity.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 0,
+    "explanation": "The Hawthorne Studies began with experiments on lighting levels to determine their effect on worker productivity, but later revealed the importance of social factors.",
+    "id": 2022
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Behavioral Approach",
+    "question": "Theory X assumes that employees are intrinsically motivated and enjoy work.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 1,
+    "explanation": "Theory X assumes that employees are lazy, dislike work, and need to be controlled. Theory Y assumes that employees are self-motivated and enjoy work.",
+    "id": 2023
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Management Science",
+    "question": "The management science approach relies heavily on the use of mathematical models and statistical techniques.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 0,
+    "explanation": "The management science approach is characterized by its use of quantitative methods, including mathematical models, statistics, and computer simulations.",
+    "id": 2024
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Systems Approach",
+    "question": "A closed system is influenced by and interacts with its external environment.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 1,
+    "explanation": "A closed system does not interact with its external environment. An open system interacts with and is influenced by its environment.",
+    "id": 2025
+  },
+  {
+    "type": "judge",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Contingency Approach",
+    "question": "The contingency approach is also known as the 'one best way' approach.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "answer": 1,
+    "explanation": "The contingency approach rejects the 'one best way' idea; it suggests that the best management approach depends on the specific situation.",
+    "id": 2026
+  },
+  {
+    "type": "fill",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Scientific Management",
+    "question": "Frederick Taylor's four principles of scientific management include using science to select and train workers, and cooperating with workers to ensure work is done in the ________ way.",
+    "answer": "scientific",
+    "explanation": "Taylor's principles emphasize replacing rule-of-thumb methods with scientifically determined methods.",
+    "id": 2027
+  },
+  {
+    "type": "fill",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "General Administrative Theory",
+    "question": "Henri Fayol identified five functions of management: planning, organizing, commanding, coordinating, and ________.",
+    "answer": "controlling",
+    "explanation": "Fayol's five functions include controlling as the final function.",
+    "id": 2028
+  },
+  {
+    "type": "fill",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "General Administrative Theory",
+    "question": "Max Weber's ideal type of organization is called a ________.",
+    "answer": "bureaucracy",
+    "explanation": "Weber defined bureaucracy as an ideal type of organization with a clear hierarchy, division of labor, and formal rules.",
+    "id": 2029
+  },
+  {
+    "type": "fill",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Behavioral Approach",
+    "question": "The Hawthorne Studies were conducted at the ________ Works of the Western Electric Company.",
+    "answer": "Hawthorne",
+    "explanation": "The studies were named after the Hawthorne Works in Chicago.",
+    "id": 2030
+  },
+  {
+    "type": "fill",
+    "chapter": "Chapter 2 Management History",
+    "knowledge": "Contingency Approach",
+    "question": "The contingency approach emphasizes that management practices should be ________ to the specific situation.",
+    "answer": "tailored",
+    "explanation": "The contingency approach advocates that management practices be tailored to fit the unique circumstances of each situation.",
+    "id": 2031
+  }
+]
