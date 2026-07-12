@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-教学练习小程序 - 支持多课程（V1.1）
+教学练习小程序 - V1.1 多课程支持（完整版）
 """
 
 import streamlit as st
@@ -89,12 +89,13 @@ def login_user(login_id: str, password: str) -> tuple[bool, str, dict]:
     else:
         return False, "密码错误", {}
 
-def record_practice(user_id: str, question_id: int, is_correct: bool, knowledge_point: str, chapter: str, time_spent: int = None):
-    # ========== 新增：获取当前选中的课程 ==========
-    course = st.session_state.get("course", "管理学（马工程）")
-    
-    # ========== 1. 记录到练习日志（新增 course 字段） ==========
+# ===================== 升级后的 record_practice（支持课程） =====================
+def record_practice(user_id: str, question_id: int, is_correct: bool, knowledge_point: str, chapter: str, course: str, time_spent: int = None):
+    """
+    记录练习数据（V2.0 版本：支持课程字段，知识点带课程前缀）
+    """
     try:
+        # 1. 记录到练习日志（新增 course 字段）
         data = {
             'user_id': user_id,
             'question_id': question_id,
@@ -102,13 +103,13 @@ def record_practice(user_id: str, question_id: int, is_correct: bool, knowledge_
             'answered_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
             'knowledge_point': knowledge_point,
             'chapter': chapter,
-            'course': course  # <--- 这里存入了课程名称
+            'course': course   # 新增课程字段
         }
         if time_spent:
             data['time_spent'] = time_spent
         supabase.table('practice_logs').insert(data).execute()
 
-        # ========== 2. 更新题目统计（这部分原样不动） ==========
+        # 2. 更新题目统计（不变）
         resp = supabase.table('question_stats').select('*').eq('question_id', question_id).execute()
         if resp.data:
             stats = resp.data[0]
@@ -127,9 +128,9 @@ def record_practice(user_id: str, question_id: int, is_correct: bool, knowledge_
                 'last_updated': datetime.datetime.now(datetime.timezone.utc).isoformat()
             }).execute()
 
-        # ========== 3. 更新用户知识点进度（关键改动：加上课程前缀，防止两门课互相覆盖） ==========
-        full_knowledge = f"{course}|{knowledge_point}"  # 例如：管理学（马工程）|计划
-        
+        # 3. 更新用户知识点进度（关键改动：知识点加课程前缀，防止两门课互相覆盖）
+        full_knowledge = f"{course}|{knowledge_point}"   # 例：管理学（马工程）|计划
+
         resp = supabase.table('user_progress').select('*').eq('user_id', user_id).eq('knowledge_point', full_knowledge).execute()
         if resp.data:
             prog = resp.data[0]
@@ -144,7 +145,7 @@ def record_practice(user_id: str, question_id: int, is_correct: bool, knowledge_
         else:
             supabase.table('user_progress').insert({
                 'user_id': user_id,
-                'knowledge_point': full_knowledge,  # 存入带前缀的知识点
+                'knowledge_point': full_knowledge,
                 'correct_rate': 1.0 if is_correct else 0.0,
                 'total_attempts': 1,
                 'last_practiced': datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -159,13 +160,15 @@ def get_site_stats():
     except:
         return 0
 
-def get_top_wrong_questions_filtered(class_name=None, study_year=None, major=None, chapter=None, limit=10):
+# ===================== 统计函数（已适配 V2.0 课程参数） =====================
+def get_top_wrong_questions_filtered(class_name=None, study_year=None, major=None, chapter=None, course=None, limit=10):
     try:
         result = supabase.rpc('get_top_wrong_questions', {
             'p_class_name': class_name,
             'p_study_year': study_year,
             'p_major': major,
             'p_chapter': chapter,
+            'p_course': course,    # 课程筛选
             'p_limit': limit
         }).execute()
         return result.data
@@ -173,13 +176,14 @@ def get_top_wrong_questions_filtered(class_name=None, study_year=None, major=Non
         st.error(f"获取高频错题失败: {e}")
         return []
 
-def get_knowledge_accuracy_filtered(class_name=None, study_year=None, major=None, chapter=None):
+def get_knowledge_accuracy_filtered(class_name=None, study_year=None, major=None, chapter=None, course=None):
     try:
         result = supabase.rpc('get_knowledge_accuracy', {
             'p_class_name': class_name,
             'p_study_year': study_year,
             'p_major': major,
-            'p_chapter': chapter
+            'p_chapter': chapter,
+            'p_course': course     # 课程筛选
         }).execute()
         return result.data
     except Exception as e:
@@ -208,17 +212,11 @@ def reset_user_password(admin_pw: str, student_id: str, new_password: str) -> tu
 # ---------- 题库加载（支持多课程） ----------
 @st.cache_data(ttl=600)
 def load_questions(course: str):
-    """
-    根据课程名称加载对应的题库文件。
-    课程映射：
-        - 管理学（马工程） -> chapter*.json
-        - 管理学（英文）   -> en_chapter*.json
-    """
     base_dir = os.path.dirname(__file__)
     if course == "管理学（英文）":
         prefix = "en_chapter"
     else:
-        prefix = "chapter"   # 默认马工程
+        prefix = "chapter"
     pattern = os.path.join(base_dir, f"{prefix}*.json")
     file_list = glob.glob(pattern)
     all_questions = []
@@ -246,11 +244,9 @@ def load_questions(course: str):
     return all_questions
 
 def get_current_question_bank():
-    """获取当前课程对应的题库（基于 session_state）"""
     course = st.session_state.get("course", "管理学（马工程）")
     return load_questions(course)
 
-# ---------- 辅助函数（基于当前题库） ----------
 def filter_questions(chapter=None, knowledge=None):
     bank = get_current_question_bank()
     if not bank:
@@ -307,7 +303,7 @@ def init_session_state():
     if "show_dashboard" not in st.session_state:
         st.session_state.show_dashboard = False
     if "course" not in st.session_state:
-        st.session_state.course = "管理学（马工程）"   # 默认课程
+        st.session_state.course = "管理学（马工程）"
 
 # ---------- 主页面 ----------
 st.set_page_config(page_title="管理学 · 智能练习平台", page_icon="📚", layout="centered")
@@ -364,7 +360,7 @@ with st.sidebar:
                     else:
                         st.warning("请填写完整信息")
 
-    # 2. 选择课程（新增）
+    # ================== 2. 选择课程（新增） ==================
     st.markdown("---")
     st.subheader("📚 选择课程")
     course_options = ["管理学（马工程）", "管理学（英文）"]
@@ -376,7 +372,6 @@ with st.sidebar:
         key="course_select"
     )
     if selected_course != st.session_state.get("course"):
-        # 课程变化：清空题目和错题本，防止混淆
         st.session_state.course = selected_course
         st.session_state.questions = []
         st.session_state.wrong_list = []
@@ -387,7 +382,6 @@ with st.sidebar:
     # 3. 练习控制台
     st.markdown("---")
     st.subheader("🎯 练习控制台")
-    # 获取当前题库的章节列表
     current_bank = get_current_question_bank()
     chapters = ["全部"] + sorted(set(q["chapter"] for q in current_bank))
     selected_chapter = st.selectbox("选择章节", chapters, key="chapter_select")
@@ -490,43 +484,62 @@ if st.session_state.get("show_dashboard", False):
                     st.warning("请填写完整")
 
     with st.spinner("加载数据..."):
+        # 获取筛选选项
         try:
+            course_options = ["全部", "管理学（马工程）", "管理学（英文）"]
             classes_resp = supabase.table('users').select('class_name').execute()
             classes = sorted(set([row['class_name'] for row in classes_resp.data if row['class_name']]))
             years_resp = supabase.table('users').select('study_year').execute()
             years = sorted(set([row['study_year'] for row in years_resp.data if row['study_year']]), reverse=True)
             majors_resp = supabase.table('users').select('major').execute()
             majors = sorted(set([row['major'] for row in majors_resp.data if row['major']]))
-            # 章节列表基于当前课程题库
             current_bank = get_current_question_bank()
             all_chapters = sorted(set(q['chapter'] for q in current_bank))
         except Exception as e:
+            course_options = ["全部", "管理学（马工程）", "管理学（英文）"]
             classes, years, majors, all_chapters = [], [], [], []
             st.error(f"获取筛选选项失败: {e}")
 
-        col_f1, col_f2, col_f3, col_f4 = st.columns(4)
+        # ================== 筛选器布局（顺序：课程 → 章节 → 年份 → 专业 → 班级） ==================
+        col_f1, col_f2, col_f3, col_f4, col_f5 = st.columns(5)
         with col_f1:
-            selected_class = st.selectbox("班级", ["全部"] + classes, key="class_filter")
+            selected_course_filter = st.selectbox("课程", course_options, key="course_filter")
         with col_f2:
-            selected_year = st.selectbox("年份", ["全部"] + [str(y) for y in years], key="year_filter")
-        with col_f3:
-            selected_major = st.selectbox("专业", ["全部"] + majors, key="major_filter")
-        with col_f4:
             selected_chapter_filter = st.selectbox("章节", ["全部"] + all_chapters, key="chapter_filter")
+        with col_f3:
+            selected_year_filter = st.selectbox("年份", ["全部"] + [str(y) for y in years], key="year_filter")
+        with col_f4:
+            selected_major_filter = st.selectbox("专业", ["全部"] + majors, key="major_filter")
+        with col_f5:
+            selected_class_filter = st.selectbox("班级", ["全部"] + classes, key="class_filter")
 
-        class_filter = None if selected_class == "全部" else selected_class
-        year_filter = None if selected_year == "全部" else int(selected_year)
-        major_filter = None if selected_major == "全部" else selected_major
+        # 处理筛选值
+        course_filter = None if selected_course_filter == "全部" else selected_course_filter
+        class_filter = None if selected_class_filter == "全部" else selected_class_filter
+        year_filter = None if selected_year_filter == "全部" else int(selected_year_filter)
+        major_filter = None if selected_major_filter == "全部" else selected_major_filter
         chapter_filter = None if selected_chapter_filter == "全部" else selected_chapter_filter
 
         total_users = get_site_stats()
-        top_wrong = get_top_wrong_questions_filtered(class_filter, year_filter, major_filter, chapter_filter, limit=10)
-        knowledge_acc = get_knowledge_accuracy_filtered(class_filter, year_filter, major_filter, chapter_filter)
+        top_wrong = get_top_wrong_questions_filtered(
+            class_name=class_filter,
+            study_year=year_filter,
+            major=major_filter,
+            chapter=chapter_filter,
+            course=course_filter,
+            limit=10
+        )
+        knowledge_acc = get_knowledge_accuracy_filtered(
+            class_name=class_filter,
+            study_year=year_filter,
+            major=major_filter,
+            chapter=chapter_filter,
+            course=course_filter
+        )
 
         st.metric("总注册用户", total_users)
         st.subheader("🔝 高频错题 TOP 10")
         if top_wrong:
-            # 使用当前题库查找题目文本（注意：若错题来自其他课程，可能找不到，显示ID）
             id_to_question = {q['id']: q for q in get_current_question_bank()}
             for item in top_wrong:
                 qid = item['question_id']
@@ -551,7 +564,6 @@ if st.session_state.get("show_dashboard", False):
 
 # ---------- 主区域答题 ----------
 if st.session_state.questions and not st.session_state.quiz_finished:
-    # 检查登录状态，未登录则清空题目并提示
     if st.session_state.user is None:
         st.warning("⚠️ 请登录后进行练习")
         st.session_state.questions = []
@@ -566,6 +578,7 @@ if st.session_state.questions and not st.session_state.quiz_finished:
     question_id = q['id']
     knowledge_point = q['knowledge']
     chapter = q['chapter']
+    current_course = st.session_state.get("course", "管理学（马工程）")
 
     st.subheader(f"📝 第 {idx+1} / {total} 题")
     st.markdown(f"**{q['question']}**")
@@ -598,7 +611,6 @@ if st.session_state.questions and not st.session_state.quiz_finished:
     col_sub, col_next = st.columns(2)
     with col_sub:
         if st.button("✅ 提交答案", use_container_width=True, disabled=st.session_state.submitted):
-            # 再次检查登录
             if st.session_state.user is None:
                 st.error("❌ 请登录后再答题")
                 st.stop()
@@ -625,10 +637,17 @@ if st.session_state.questions and not st.session_state.quiz_finished:
                 if st.session_state.user_answer == q["answer"]:
                     correct = True
 
-            # 记录练习数据
-            record_practice(st.session_state.user['id'], question_id, correct, knowledge_point, chapter, st.session_state.get("course", "管理学（马工程）"), elapsed)
+            # ========== 调用升级后的 record_practice（传入 course） ==========
+            record_practice(
+                st.session_state.user['id'],
+                question_id,
+                correct,
+                knowledge_point,
+                chapter,
+                current_course,   # 传入课程
+                elapsed
+            )
 
-            # 错题本逻辑（去重+自动移除）
             if correct:
                 st.session_state.feedback = "🎉 回答正确！"
                 st.session_state.wrong_list = [w for w in st.session_state.wrong_list if w['id'] != q['id']]
@@ -687,4 +706,4 @@ else:
     st.write("所有答题数据将自动记录，用于生成统计报告。")
 
 st.divider()
-st.caption("教学练习平台 · V1.1 · 支持多课程")
+st.caption("教学练习平台 · V1.1 · 支持多课程 & 看板课程筛选")
