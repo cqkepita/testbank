@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-教学练习小程序 - 完整版（学号唯一、教师重置密码）
+教学练习小程序 - 完整版（学号唯一、教师重置密码、错题重练使用错题本）
 """
 
 import streamlit as st
@@ -51,7 +51,6 @@ def register_user(username: str, password: str, class_name: str, study_year: int
     if not student_id:
         return False, "学号不能为空"
 
-    # 检查学号是否已存在
     resp = supabase.table('users').select('id').eq('student_id', student_id).execute()
     if resp.data:
         return False, "该学号已被注册"
@@ -75,13 +74,8 @@ def register_user(username: str, password: str, class_name: str, study_year: int
         return False, f"注册异常: {str(e)}"
 
 def login_user(login_id: str, password: str) -> tuple[bool, str, dict]:
-    """
-    登录：先按学号查询，如果找不到再按用户名查询（兼容旧用户）
-    """
-    # 尝试按学号查询
     resp = supabase.table('users').select('*').eq('student_id', login_id).execute()
     if not resp.data:
-        # 尝试按用户名查询
         resp = supabase.table('users').select('*').eq('username', login_id).execute()
     if not resp.data:
         return False, "学号或用户名不存在", {}
@@ -109,7 +103,6 @@ def record_practice(user_id: str, question_id: int, is_correct: bool, knowledge_
             data['time_spent'] = time_spent
         supabase.table('practice_logs').insert(data).execute()
 
-        # 更新题目统计
         resp = supabase.table('question_stats').select('*').eq('question_id', question_id).execute()
         if resp.data:
             stats = resp.data[0]
@@ -128,7 +121,6 @@ def record_practice(user_id: str, question_id: int, is_correct: bool, knowledge_
                 'last_updated': datetime.datetime.now(datetime.timezone.utc).isoformat()
             }).execute()
 
-        # 更新用户知识点掌握度
         resp = supabase.table('user_progress').select('*').eq('user_id', user_id).eq('knowledge_point', knowledge_point).execute()
         if resp.data:
             prog = resp.data[0]
@@ -186,7 +178,6 @@ def get_knowledge_accuracy_filtered(class_name=None, study_year=None, major=None
         return []
 
 def reset_user_password(admin_pw: str, student_id: str, new_password: str) -> tuple[bool, str]:
-    """教师重置学生密码"""
     if admin_pw != ADMIN_PASSWORD:
         return False, "管理员密码错误"
     if not student_id:
@@ -194,7 +185,6 @@ def reset_user_password(admin_pw: str, student_id: str, new_password: str) -> tu
     if len(new_password) < 6:
         return False, "新密码至少6个字符"
 
-    # 查找该学号用户
     resp = supabase.table('users').select('id').eq('student_id', student_id).execute()
     if not resp.data:
         return False, "未找到该学号对应的用户"
@@ -349,7 +339,7 @@ with st.sidebar:
                     else:
                         st.warning("请填写完整信息")
 
-    # 2. 练习控制
+    # 2. 练习控制台
     st.markdown("---")
     st.subheader("🎯 练习控制台")
     chapters = ["全部"] + sorted(set(q["chapter"] for q in QUESTION_BANK))
@@ -374,20 +364,20 @@ with st.sidebar:
                 st.session_state.start_time = time.time()
                 st.rerun()
     with col2:
-    if st.button("📕 错题重练", use_container_width=True):
-        if not st.session_state.wrong_list:
-            st.sidebar.info("错题本为空")
-        else:
-            wrong_questions = st.session_state.wrong_list[:]
-            random.shuffle(wrong_questions)
-            st.session_state.questions = wrong_questions
-            st.session_state.current_idx = 0
-            st.session_state.user_answer = None
-            st.session_state.submitted = False
-            st.session_state.feedback = None
-            st.session_state.quiz_finished = False
-            st.session_state.start_time = time.time()
-            st.rerun()
+        if st.button("📕 错题重练", use_container_width=True):
+            if not st.session_state.wrong_list:
+                st.sidebar.info("错题本为空")
+            else:
+                wrong_questions = st.session_state.wrong_list[:]
+                random.shuffle(wrong_questions)
+                st.session_state.questions = wrong_questions
+                st.session_state.current_idx = 0
+                st.session_state.user_answer = None
+                st.session_state.submitted = False
+                st.session_state.feedback = None
+                st.session_state.quiz_finished = False
+                st.session_state.start_time = time.time()
+                st.rerun()
 
     # 3. 统计与错题本
     st.markdown("---")
@@ -436,7 +426,6 @@ with st.sidebar:
 # ---------- 教师看板页面 ----------
 if st.session_state.get("show_dashboard", False):
     st.header("📊 教师看板")
-    # 密码重置功能（放在看板最上方）
     with st.expander("🔑 重置学生密码 (教师专用)"):
         with st.form("reset_password_form"):
             reset_student_id = st.text_input("学生学号")
@@ -454,7 +443,6 @@ if st.session_state.get("show_dashboard", False):
                     st.warning("请填写完整")
 
     with st.spinner("加载数据..."):
-        # 获取筛选选项
         try:
             classes_resp = supabase.table('users').select('class_name').execute()
             classes = sorted(set([row['class_name'] for row in classes_resp.data if row['class_name']]))
