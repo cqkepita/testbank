@@ -163,7 +163,7 @@ def get_site_stats():
 # ===================== 统计函数（已适配 V2.0 课程参数） =====================
 def get_top_wrong_questions_filtered(class_name=None, study_year=None, major=None, chapter=None, course=None, limit=10):
     try:
-        result = supabase.rpc('get_top_wrong_questions', {
+        result = supabase.rpc('get_top_wrong_questions_v2', {
             'p_class_name': class_name,
             'p_study_year': study_year,
             'p_major': major,
@@ -178,7 +178,7 @@ def get_top_wrong_questions_filtered(class_name=None, study_year=None, major=Non
 
 def get_knowledge_accuracy_filtered(class_name=None, study_year=None, major=None, chapter=None, course=None):
     try:
-        result = supabase.rpc('get_knowledge_accuracy', {
+        result = supabase.rpc('get_knowledge_accuracy_v2', {
             'p_class_name': class_name,
             'p_study_year': study_year,
             'p_major': major,
