@@ -1689,5 +1689,8 @@
           {"source": "kp_177", "target": "kp_184", "relation": "关联"},
           {"source": "kp_184", "target": "kp_189", "relation": "并列"},
           {"source": "kp_184", "target": "kp_190", "relation": "并列"}
-      ]
-    }
+  ]
+}
+}
+}
+}
