@@ -714,7 +714,7 @@ if show_graph and graph_data:
                     "force": {
                         "repulsion": 500,
                         "edgeLength": [150, 300],
-                        "gravity": 0.1
+                        "gravity": 0.1,
                         "layoutAnimation": False  # 固定
                     },
                     "draggable": False, #禁止拖动
