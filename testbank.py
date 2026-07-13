@@ -715,8 +715,9 @@ if show_graph and graph_data:
                         "repulsion": 500,
                         "edgeLength": [150, 300],
                         "gravity": 0.1
+                        "layoutAnimation": False  # 固定
                     },
-                    "draggable": True,
+                    "draggable": False, #禁止拖动
                     "data": chart_data["nodes"],
                     "links": chart_data["links"],
                     "label": {
@@ -805,13 +806,14 @@ if show_graph and graph_data:
                     },
                     "series": [{
                         "type": "graph",
-                        "layout": "force",
-                        "force": {
-                            "repulsion": 300,
-                            "edgeLength": [100, 200],
-                            "gravity": 0.1
+                        "layout": "circular",
+                        "circular": {
+                            "rotateLabel": False,
+                            "label": {
+                                "position": "bottom"
+                            }
                         },
-                        "draggable": True,
+                        "draggable": False,
                         "data": chart_data["nodes"],
                         "links": chart_data["links"],
                         "label": {
