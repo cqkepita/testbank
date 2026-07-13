@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-教学练习小程序 - V1.1 多课程支持（完整版）
+教学练习小程序 - V1.1 多课程支持（完整版）+ 知识图谱点击交互
 """
-
+from streamlit_echarts import st_echarts
+import json
 import streamlit as st
 import random
-import json
 import os
 import glob
 import bcrypt
 from supabase import create_client
 import datetime
 import time
+
 
 # ---------- 配置 ----------
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -209,6 +210,170 @@ def reset_user_password(admin_pw: str, student_id: str, new_password: str) -> tu
     except Exception as e:
         return False, f"重置失败: {str(e)}"
 
+# ---------- 知识图谱加载 ----------
+@st.cache_data(ttl=600)
+def load_knowledge_graph():
+    """加载知识图谱 JSON 文件"""
+    graph_path = os.path.join(os.path.dirname(__file__), "knowledge_graph.json")
+    if not os.path.exists(graph_path):
+        return None
+    try:
+        with open(graph_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        st.error(f"加载知识图谱失败: {e}")
+        return None
+
+def get_graph_data(course: str, view_type: str = "core", chapter: str = None):
+    """
+    获取知识图谱的 ECharts 格式数据
+    view_type: "core" 总图谱 或 "chapter" 章节图谱
+    """
+    graph_data = load_knowledge_graph()
+    if not graph_data:
+        return None
+    
+    courses = graph_data.get("courses", {})
+    if course not in courses:
+        return None
+    
+    course_data = courses[course]
+    
+    if view_type == "core":
+        # 总图谱：使用 core_map
+        core_map = course_data.get("core_map", {})
+        nodes = core_map.get("nodes", [])
+        links = core_map.get("links", [])
+        title = f"{course} · 核心知识图谱"
+    else:
+        # 章节图谱
+        chapters = course_data.get("chapters", {})
+        if chapter not in chapters:
+            return None
+        chapter_data = chapters[chapter]
+        nodes = chapter_data.get("nodes", [])
+        links = chapter_data.get("links", [])
+        title = f"{course} · {chapter}"
+    
+    # 转换为 ECharts 格式
+    echarts_nodes = []
+    for node in nodes:
+        echarts_nodes.append({
+            "id": node["id"],
+            "name": node["name"],
+            "symbolSize": 40,
+            "itemStyle": {
+                "color": "#4A90D9"
+            },
+            "label": {
+                "fontSize": 12,
+                "fontWeight": "bold"
+            }
+        })
+    
+    echarts_links = []
+    for link in links:
+        echarts_links.append({
+            "source": link["source"],
+            "target": link["target"],
+            "label": {
+                "show": True,
+                "formatter": link.get("relation", "")
+            }
+        })
+    
+    return {
+        "title": title,
+        "nodes": echarts_nodes,
+        "links": echarts_links,
+        "raw_nodes": nodes  # 保存原始数据，用于查询详情
+    }
+
+# ---------- 知识图谱交互函数 ----------
+def show_knowledge_detail(node_id: str, graph_data: dict):
+    """显示知识点的详情弹窗"""
+    if not node_id:
+        return
+    
+    # 在所有节点中查找
+    all_nodes = []
+    courses = graph_data.get("courses", {})
+    for course_name, course_data in courses.items():
+        # 从章节中查找
+        chapters = course_data.get("chapters", {})
+        for chapter_name, chapter_data in chapters.items():
+            for node in chapter_data.get("nodes", []):
+                node_copy = node.copy()
+                node_copy["chapter"] = chapter_name
+                all_nodes.append(node_copy)
+        # 从总图谱中查找
+        core_nodes = course_data.get("core_map", {}).get("nodes", [])
+        for node in core_nodes:
+            node_copy = node.copy()
+            if "chapter" not in node_copy:
+                node_copy["chapter"] = "核心知识点"
+            all_nodes.append(node_copy)
+    
+    # 去重（按 id）
+    seen = set()
+    unique_nodes = []
+    for node in all_nodes:
+        if node["id"] not in seen:
+            seen.add(node["id"])
+            unique_nodes.append(node)
+    
+    # 查找目标节点
+    target = None
+    for node in unique_nodes:
+        if node["id"] == node_id:
+            target = node
+            break
+    
+    if not target:
+        st.warning(f"未找到该知识点（ID: {node_id}）")
+        return
+    
+    # 获取当前课程名称
+    current_course = st.session_state.get("course", "管理学（马工程）")
+    
+    # 计算掌握度（从 user_progress 查询）
+    accuracy = None
+    if st.session_state.user:
+        full_knowledge = f"{current_course}|{target['name']}"
+        try:
+            resp = supabase.table('user_progress').select('correct_rate').eq('user_id', st.session_state.user['id']).eq('knowledge_point', full_knowledge).execute()
+            if resp.data:
+                accuracy = resp.data[0]['correct_rate']
+        except:
+            pass
+    
+    # 使用 st.dialog 显示详情
+    with st.dialog("📖 " + target["name"], width="large"):
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            st.markdown(f"**所属章节**：{target.get('chapter', '未标注')}")
+            st.markdown(f"**题目数量**：{target.get('question_count', '未知')} 道")
+            if accuracy is not None:
+                color = "🟢" if accuracy >= 0.8 else "🟡" if accuracy >= 0.6 else "🔴"
+                st.markdown(f"**掌握度**：{color} {accuracy:.1%}")
+            else:
+                st.markdown("**掌握度**：暂无数据")
+            st.divider()
+            st.markdown("**📝 详细描述**")
+            st.markdown(target.get("description", "暂无描述"))
+        
+        with col2:
+            st.caption("操作")
+            if st.button("📖 查看完整内容", use_container_width=True):
+                st.info("✅ 知识点详情已展示在左侧")
+            
+            if st.button("🎯 开始练习", use_container_width=True, type="primary"):
+                # 跳转到练习控制台，自动选中该知识点
+                st.session_state.knowledge_target = target["name"]
+                st.session_state.knowledge_chapter = target.get("chapter", "")
+                st.session_state.pending_knowledge = True
+                st.rerun()
+
 # ---------- 题库加载（支持多课程） ----------
 @st.cache_data(ttl=600)
 def load_questions(course: str):
@@ -304,12 +469,56 @@ def init_session_state():
         st.session_state.show_dashboard = False
     if "course" not in st.session_state:
         st.session_state.course = "管理学（马工程）"
+    if "clicked_node_data" not in st.session_state:
+        st.session_state.clicked_node_data = None
+    if "show_graph" not in st.session_state:
+        st.session_state.show_graph = False
+    if "pending_knowledge" not in st.session_state:
+        st.session_state.pending_knowledge = False
+    if "knowledge_target" not in st.session_state:
+        st.session_state.knowledge_target = None
+    if "knowledge_chapter" not in st.session_state:
+        st.session_state.knowledge_chapter = None
+    if "graph_click_trigger" not in st.session_state:
+        st.session_state.graph_click_trigger = 0
 
 # ---------- 主页面 ----------
 st.set_page_config(page_title="管理学 · 智能练习平台", page_icon="📚", layout="centered")
 st.title("📖 管理学 · 智能练习平台")
 
 init_session_state()
+
+# ===================== 处理知识图谱点击事件 =====================
+# 放在页面顶部，确保能捕获点击事件
+graph_data = load_knowledge_graph()
+
+if st.session_state.get("clicked_node_data"):
+    clicked = st.session_state.clicked_node_data
+    if clicked and clicked.get("id"):
+        show_knowledge_detail(clicked["id"], graph_data)
+    st.session_state.clicked_node_data = None
+
+# 处理从知识图谱跳转过来的练习请求
+if st.session_state.get("pending_knowledge", False):
+    target_name = st.session_state.get("knowledge_target", "")
+    target_chapter = st.session_state.get("knowledge_chapter", "")
+    if target_name:
+        st.success(f"🎯 已选中知识点：{target_name}")
+        # 自动设置练习控制台的知识点筛选
+        # 尝试在知识点列表中找到匹配的
+        knowledge_options = get_available_knowledge(None)
+        if target_name in knowledge_options:
+            # 更新 session_state 中的知识点选择
+            st.session_state.knowledge_select = target_name
+        # 如果有章节信息，尝试自动选中章节
+        if target_chapter:
+            chapters = ["全部"] + sorted(set(q["chapter"] for q in get_current_question_bank()))
+            if target_chapter in chapters:
+                st.session_state.chapter_select = target_chapter
+        # 自动勾选显示知识图谱（方便看到关联）
+        st.session_state.show_graph = True
+    st.session_state.pending_knowledge = False
+    st.rerun()
 
 # ---------- 侧边栏 ----------
 with st.sidebar:
@@ -360,7 +569,7 @@ with st.sidebar:
                     else:
                         st.warning("请填写完整信息")
 
-    # ================== 2. 选择课程（新增） ==================
+    # ================== 2. 选择课程 ==================
     st.markdown("---")
     st.subheader("📚 选择课程")
     course_options = ["管理学（马工程）", "管理学（英文）"]
@@ -463,6 +672,210 @@ with st.sidebar:
         if st.button("关闭看板"):
             st.session_state.show_dashboard = False
             st.rerun()
+
+# ---------- 知识图谱区域（主区域） ----------
+# 获取当前课程
+current_course = st.session_state.get("course", "管理学（马工程）")
+
+# 布局：知识图谱开关
+show_graph = st.checkbox("📊 显示知识图谱", value=st.session_state.get("show_graph", False))
+st.session_state.show_graph = show_graph
+
+if show_graph and graph_data:
+    # 选择视图类型
+    view_type = st.radio(
+        "图谱视图",
+        ["📈 总图谱", "📚 章节图谱"],
+        horizontal=True,
+        key="graph_view_type"
+    )
+    
+    # ================== 总图谱 ==================
+    if view_type == "📈 总图谱":
+        chart_data = get_graph_data(current_course, "core")
+        if chart_data:
+            st.subheader("📊 核心知识图谱")
+            st.caption("💡 点击任意知识点节点，查看详情")
+            
+            # 构建 ECharts 配置
+            option = {
+                "title": {
+                    "text": chart_data["title"],
+                    "textStyle": {"fontSize": 14, "fontWeight": "normal"},
+                    "left": "center"
+                },
+                "tooltip": {
+                    "formatter": "{b}",
+                    "trigger": "item"
+                },
+                "series": [{
+                    "type": "graph",
+                    "layout": "force",
+                    "force": {
+                        "repulsion": 500,
+                        "edgeLength": [150, 300],
+                        "gravity": 0.1
+                    },
+                    "draggable": True,
+                    "data": chart_data["nodes"],
+                    "links": chart_data["links"],
+                    "label": {
+                        "show": True,
+                        "position": "bottom",
+                        "fontSize": 12,
+                        "fontWeight": "bold"
+                    },
+                    "lineStyle": {
+                        "color": "source",
+                        "curveness": 0.3
+                    },
+                    "emphasis": {
+                        "focus": "adjacency",
+                        "lineStyle": {
+                            "width": 3
+                        }
+                    },
+                    "itemStyle": {
+                        "borderColor": "#4A90D9",
+                        "borderWidth": 2
+                    }
+                }]
+            }
+            
+            # ========== 使用 st_echarts 渲染，捕获点击事件 ==========
+            click_result = st_echarts(
+                option,
+                height="550px",
+                key=f"graph_core_{current_course}_{st.session_state.graph_click_trigger}",
+                events={
+                    "click": """
+                        function(params) {
+                            if (params.dataType === 'node' && params.data) {
+                                return params.data;
+                            }
+                            return null;
+                        }
+                    """
+                }
+            )
+            
+            # 如果有点击事件返回，保存到 session_state
+            if click_result:
+                st.session_state.clicked_node_data = click_result
+                st.session_state.graph_click_trigger += 1
+                st.rerun()
+            
+            # ========== 备选方案：下拉框选择 ==========
+            st.divider()
+            st.caption("🔽 或从下方列表中选择知识点")
+            # 从原始数据中构建名称列表
+            node_options = [""] + [f"{node['name']} ({node.get('chapter', '')})" for node in chart_data["raw_nodes"]]
+            selected_name = st.selectbox("选择知识点查看详情", node_options, key="graph_select_core")
+            if selected_name:
+                # 提取知识点名称
+                display_name = selected_name.split(" (")[0]
+                for node in chart_data["raw_nodes"]:
+                    if node["name"] == display_name:
+                        show_knowledge_detail(node["id"], graph_data)
+                        break
+    
+    # ================== 章节图谱 ==================
+    else:
+        courses = graph_data.get("courses", {})
+        course_data = courses.get(current_course, {})
+        chapters = list(course_data.get("chapters", {}).keys())
+        
+        if chapters:
+            selected_chapter = st.selectbox("选择章节", chapters, key="graph_chapter_select")
+            chart_data = get_graph_data(current_course, "chapter", selected_chapter)
+            
+            if chart_data:
+                st.subheader(f"📚 {selected_chapter}")
+                st.caption("💡 点击任意知识点节点，查看详情")
+                
+                option = {
+                    "title": {
+                        "text": chart_data["title"],
+                        "textStyle": {"fontSize": 14, "fontWeight": "normal"},
+                        "left": "center"
+                    },
+                    "tooltip": {
+                        "formatter": "{b}",
+                        "trigger": "item"
+                    },
+                    "series": [{
+                        "type": "graph",
+                        "layout": "force",
+                        "force": {
+                            "repulsion": 300,
+                            "edgeLength": [100, 200],
+                            "gravity": 0.1
+                        },
+                        "draggable": True,
+                        "data": chart_data["nodes"],
+                        "links": chart_data["links"],
+                        "label": {
+                            "show": True,
+                            "position": "bottom",
+                            "fontSize": 11,
+                            "fontWeight": "bold"
+                        },
+                        "lineStyle": {
+                            "color": "source",
+                            "curveness": 0.3
+                        },
+                        "emphasis": {
+                            "focus": "adjacency"
+                        },
+                        "itemStyle": {
+                            "borderColor": "#4A90D9",
+                            "borderWidth": 2
+                        }
+                    }]
+                }
+                
+                # ========== 捕获章节图谱的点击事件 ==========
+                click_result = st_echarts(
+                    option,
+                    height="550px",
+                    key=f"graph_chapter_{current_course}_{selected_chapter}_{st.session_state.graph_click_trigger}",
+                    events={
+                        "click": """
+                            function(params) {
+                                if (params.dataType === 'node' && params.data) {
+                                    return params.data;
+                                }
+                                return null;
+                            }
+                        """
+                    }
+                )
+                
+                if click_result:
+                    st.session_state.clicked_node_data = click_result
+                    st.session_state.graph_click_trigger += 1
+                    st.rerun()
+                
+                # ========== 备选方案：下拉框选择 ==========
+                st.divider()
+                st.caption("🔽 或从下方列表中选择知识点")
+                node_options = [""] + [f"{node['name']} ({node.get('chapter', '')})" for node in chart_data["raw_nodes"]]
+                selected_name = st.selectbox("选择知识点查看详情", node_options, key="graph_select_chapter")
+                if selected_name:
+                    display_name = selected_name.split(" (")[0]
+                    for node in chart_data["raw_nodes"]:
+                        if node["name"] == display_name:
+                            show_knowledge_detail(node["id"], graph_data)
+                            break
+        else:
+            st.info("当前课程暂无章节数据")
+
+elif show_graph and not graph_data:
+    st.warning("⚠️ 未找到 knowledge_graph.json 文件，请确认文件已放置在项目根目录")
+
+else:
+    # 不显示知识图谱时，显示原有的练习提示
+    pass
 
 # ---------- 教师看板页面 ----------
 if st.session_state.get("show_dashboard", False):
@@ -706,4 +1119,4 @@ else:
     st.write("所有答题数据将自动记录，用于生成统计报告。")
 
 st.divider()
-st.caption("教学练习平台 · V1.1 · 支持多课程 & 看板课程筛选")
+st.caption("教学练习平台 · V1.1 · 支持多课程 & 看板课程筛选 & 知识图谱")
